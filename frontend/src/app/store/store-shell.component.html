@@ -1,0 +1,165 @@
+<div class="store-shell">
+  <!-- ═══ HEADER PRINCIPAL — AMARILLO MELI ═══ -->
+  <header class="meli-header">
+    <div class="header-inner">
+      <!-- Logo -->
+      <a routerLink="/store/catalog" class="logo">
+        <div class="logo-mark">R</div>
+        <span class="logo-text">Roma<strong>Store</strong></span>
+      </a>
+
+      <!-- Barra de búsqueda -->
+      <div class="search-wrapper">
+        <form (ngSubmit)="onSearch()" class="search-form">
+          <input
+            type="text"
+            [(ngModel)]="searchTerm"
+            name="search"
+            placeholder="Buscar licores, cervezas, vinos y más..."
+            class="search-input"
+            id="store-search-input"
+            autocomplete="off">
+          <button type="submit" class="search-btn" id="store-search-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
+        </form>
+      </div>
+
+      <!-- Acciones de usuario -->
+      <div class="header-actions">
+        <div class="demo-tag" *ngIf="isDemoMode">⚡ Demo</div>
+
+        <div class="user-area" (click)="toggleUserMenu()">
+          <div class="user-avatar">{{ authService.getUsername().slice(0, 1).toUpperCase() }}</div>
+          <div class="user-details">
+            <span class="user-greeting">Hola, {{ authService.getUsername() }}</span>
+            <span class="user-account">Mi cuenta ▾</span>
+          </div>
+
+          <!-- Dropdown -->
+          <div class="user-dropdown" *ngIf="showUserMenu" (click)="$event.stopPropagation()">
+            <a routerLink="/store/catalog" class="dropdown-item">🛒 Mis compras</a>
+            <a routerLink="/store/catalog" class="dropdown-item">❤️ Favoritos</a>
+            <hr class="dropdown-divider">
+            <button type="button" class="dropdown-item logout" (click)="logout()">🚪 Cerrar sesión</button>
+          </div>
+        </div>
+
+        <button type="button" class="cart-btn" (click)="toggleCartPanel()">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
+          <span class="cart-badge" *ngIf="cartService.totalItems() > 0">{{ cartService.totalItems() }}</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ CART SLIDEOVER ═══ -->
+  <div class="cart-overlay" *ngIf="showCartPanel" (click)="toggleCartPanel()"></div>
+  <div class="cart-panel" [class.open]="showCartPanel">
+    <div class="cart-header">
+      <h2>Mi Carrito</h2>
+      <button class="close-cart-btn" (click)="toggleCartPanel()">✕</button>
+    </div>
+
+    <div class="cart-body">
+      <div class="empty-cart" *ngIf="cartService.totalItems() === 0">
+        <span class="empty-icon">🛒</span>
+        <p>Tu carrito está vacío</p>
+        <button class="btn-primary-meli" (click)="toggleCartPanel()">¡Agrega productos!</button>
+      </div>
+
+      <div class="cart-items" *ngIf="cartService.totalItems() > 0">
+        <div class="cart-item" *ngFor="let item of cartService.cartItems()">
+          <div class="item-img-placeholder">
+            {{ item.producto.nombre.slice(0, 1) }}
+          </div>
+          <div class="item-info">
+            <p class="item-title">{{ item.producto.nombre }}</p>
+            <p class="item-price">S/ {{ item.precioUnitario | number:'1.2-2' }}</p>
+            
+            <div class="item-qty">
+              <button (click)="cartService.updateQuantity(item.producto.idProducto!, item.cantidad - 1)">-</button>
+              <span>{{ item.cantidad }}</span>
+              <button (click)="cartService.updateQuantity(item.producto.idProducto!, item.cantidad + 1)">+</button>
+            </div>
+          </div>
+          <div class="item-subtotal">
+            <p>S/ {{ item.subtotal | number:'1.2-2' }}</p>
+            <button class="remove-btn" (click)="cartService.removeFromCart(item.producto.idProducto!)">🗑️</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cart-footer" *ngIf="cartService.totalItems() > 0">
+      <div class="cart-totals">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>S/ {{ cartService.subtotal() | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row">
+          <span>IGV (18%)</span>
+          <span>S/ {{ cartService.igv() | number:'1.2-2' }}</span>
+        </div>
+        <div class="total-row total">
+          <span>Total</span>
+          <span>S/ {{ cartService.totalMonto() | number:'1.2-2' }}</span>
+        </div>
+      </div>
+      <button class="btn-primary-meli btn-checkout" (click)="checkout()">Finalizar Compra</button>
+    </div>
+  </div>
+
+  <!-- ═══ NAVBAR SECUNDARIA — CATEGORÍAS ═══ -->
+  <nav class="meli-nav">
+    <div class="nav-inner">
+      <a *ngFor="let cat of categories"
+         routerLink="/store/catalog"
+         [queryParams]="{category: cat}"
+         class="nav-link">
+        {{ cat }}
+      </a>
+    </div>
+  </nav>
+
+  <!-- ═══ CONTENIDO PRINCIPAL ═══ -->
+  <main class="store-main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- ═══ FOOTER MELI ═══ -->
+  <footer class="meli-footer">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <h4>RomaStore</h4>
+        <p>Tu licorería online de confianza. Los mejores licores, cervezas y vinos al mejor precio.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Mi cuenta</h4>
+        <a routerLink="/store/catalog">Mis compras</a>
+        <a routerLink="/store/catalog">Favoritos</a>
+        <a routerLink="/store/catalog">Historial</a>
+      </div>
+      <div class="footer-col">
+        <h4>Categorías</h4>
+        <a *ngFor="let cat of categories" routerLink="/store/catalog">{{ cat }}</a>
+      </div>
+      <div class="footer-col">
+        <h4>Atención al cliente</h4>
+        <a href="#">Centro de ayuda</a>
+        <a href="#">Términos y condiciones</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 RomaStore — Todos los derechos reservados. Powered by RomaPedidos.</p>
+    </div>
+  </footer>
+</div>

@@ -1,0 +1,190 @@
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">Gestión de Inventarios</p>
+    <h1>Catálogo de Productos</h1>
+    <p class="muted">Administra el inventario de licores, bebidas, precios y existencias.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" (click)="openNewModal()">
+      ➕ Nuevo Producto
+    </button>
+  </div>
+</section>
+
+<!-- BARRA DE BÚSQUEDA Y FILTROS -->
+<section class="filters-bar glass">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre o código de barras...">
+  </div>
+
+  <div class="select-box">
+    <select [(ngModel)]="selectedCategoriaId">
+      <option [value]="null">Todas las categorías</option>
+      <option *ngFor="let cat of categorias" [value]="cat.idCategoria">
+        {{ cat.nombreCategoria }}
+      </option>
+    </select>
+  </div>
+</section>
+
+<!-- GRID DE PRODUCTOS -->
+<section class="cards" *ngIf="!loading && productosFiltrados.length > 0">
+  <article *ngFor="let product of productosFiltrados" class="product glass">
+    <div class="product-header">
+      <span class="code-badge">{{ product.codigoBarras || ('PROD-' + product.idProducto) }}</span>
+      <div class="stock-badge" [class.low]="product.stock <= (product.stockMinimo || 5)">
+        {{ product.stock }} en stock
+      </div>
+    </div>
+
+    <h3>{{ product.nombre }}</h3>
+    <p class="desc">{{ product.descripcion || 'Sin descripción adicional' }}</p>
+
+    <div class="price-row">
+      <div>
+        <span class="price-label">Precio Venta</span>
+        <strong class="price">S/ {{ product.precioVenta.toFixed(2) }}</strong>
+      </div>
+
+      <div class="stock-adjust">
+        <button type="button" class="btn-stock" (click)="adjustStock(product, -1)">-</button>
+        <span>Stock</span>
+        <button type="button" class="btn-stock" (click)="adjustStock(product, 1)">+</button>
+      </div>
+    </div>
+
+    <div class="card-actions">
+      <button type="button" class="btn-action edit" (click)="openEditModal(product)">
+        ✏️ Editar
+      </button>
+      <button type="button" class="btn-action delete" (click)="deleteProduct(product)">
+        🗑️ Eliminar
+      </button>
+    </div>
+  </article>
+</section>
+
+<div class="empty-state glass" *ngIf="!loading && productosFiltrados.length === 0">
+  <p>No se encontraron productos que coincidan con la búsqueda.</p>
+</div>
+
+<!-- MODAL CREAR / EDITAR PRODUCTO -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3>{{ editingProduct ? '✏️ Editar Producto' : '🍾 Registrar Nuevo Producto' }}</h3>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="saveProduct()">
+      <div class="form-row">
+        <label>
+          Código Barras
+          <input type="text" formControlName="codigoBarras" placeholder="LIC-001">
+        </label>
+        <label>
+          Categoría 
+          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaCategoria()">
+            {{ showNuevaCategoria ? 'Cancelar' : '+ Nueva' }}
+          </button>
+          
+          <ng-container *ngIf="!showNuevaCategoria">
+            <select formControlName="idCategoria">
+              <option *ngFor="let cat of categorias" [value]="cat.idCategoria">
+                {{ cat.nombreCategoria }}
+              </option>
+            </select>
+          </ng-container>
+
+          <div *ngIf="showNuevaCategoria" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <input type="text" [(ngModel)]="nuevaCategoriaNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre de categoría" style="flex: 1;">
+            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaCategoria()" [disabled]="creandoCategoria || !nuevaCategoriaNombre.trim()">
+              {{ creandoCategoria ? '...' : 'OK' }}
+            </button>
+          </div>
+        </label>
+      </div>
+      
+      <div class="form-row">
+        <label>
+          Marca 
+          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaMarca()">
+            {{ showNuevaMarca ? 'Cancelar' : '+ Nueva' }}
+          </button>
+          <ng-container *ngIf="!showNuevaMarca">
+            <select formControlName="idMarca">
+              <option *ngFor="let m of marcas" [value]="m.idMarca">{{ m.nombreMarca }}</option>
+            </select>
+          </ng-container>
+          <div *ngIf="showNuevaMarca" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <input type="text" [(ngModel)]="nuevaMarcaNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre marca" style="flex: 1;">
+            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaMarca()" [disabled]="creandoMarca || !nuevaMarcaNombre.trim()">OK</button>
+          </div>
+        </label>
+        
+        <label>
+          Presentación 
+          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaPresentacion()">
+            {{ showNuevaPresentacion ? 'Cancelar' : '+ Nueva' }}
+          </button>
+          <ng-container *ngIf="!showNuevaPresentacion">
+            <select formControlName="idPresentacion">
+              <option *ngFor="let p of presentaciones" [value]="p.idPresentacion">{{ p.nombrePresentacion }}</option>
+            </select>
+          </ng-container>
+          <div *ngIf="showNuevaPresentacion" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
+            <input type="text" [(ngModel)]="nuevaPresentacionNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre pres." style="flex: 1;">
+            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaPresentacion()" [disabled]="creandoPresentacion || !nuevaPresentacionNombre.trim()">OK</button>
+          </div>
+        </label>
+      </div>
+
+      <label>
+        Nombre del Producto *
+        <input type="text" formControlName="nombre" placeholder="Ej. Whisky Black Label 750ml">
+      </label>
+
+      <label>
+        Descripción / Notas
+        <input type="text" formControlName="descripcion" placeholder="Presentación, grado alcohólico, etc.">
+      </label>
+
+      <div class="form-row">
+        <label>
+          Precio Compra (S/) *
+          <input type="number" step="0.1" formControlName="precioCompra">
+        </label>
+        <label>
+          Precio Venta (S/) *
+          <input type="number" step="0.1" formControlName="precioVenta">
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Stock Actual *
+          <input type="number" formControlName="stock">
+        </label>
+
+        <label>
+          Stock Mínimo
+          <input type="number" formControlName="stockMinimo">
+        </label>
+        
+        <label>
+          Stock Máximo
+          <input type="number" formControlName="stockMaximo">
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : (editingProduct ? 'Actualizar Producto' : 'Guardar Producto') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

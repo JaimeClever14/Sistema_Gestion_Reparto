@@ -1,0 +1,169 @@
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">CONTROL DE ACCESOS Y PERMISOS</p>
+    <h1>Gestión de Usuarios & Roles</h1>
+    <p class="muted">Administra los usuarios del sistema, asigna roles de Administrador, Vendedor, Repartidor o Cliente.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" (click)="openNewModal()">
+      <span>👤 + Registrar Usuario</span>
+    </button>
+  </div>
+</section>
+
+<!-- ALERTAS DE FEEDBACK -->
+<div class="alert-banner error" *ngIf="errorMessage">
+  <span>⚠️ {{ errorMessage }}</span>
+  <button type="button" class="close-alert" (click)="errorMessage = ''">✕</button>
+</div>
+
+<div class="alert-banner success" *ngIf="successMessage">
+  <span>✓ {{ successMessage }}</span>
+  <button type="button" class="close-alert" (click)="successMessage = ''">✕</button>
+</div>
+
+<!-- FILTROS Y BÚSQUEDA -->
+<section class="filters-bar glass">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre, usuario o correo electrónico...">
+  </div>
+
+  <div class="select-box">
+    <select [(ngModel)]="selectedRoleFilter">
+      <option [ngValue]="null">Todos los Roles</option>
+      <option *ngFor="let rol of roles" [ngValue]="rol.idRol">
+        {{ rol.nombreRol }}
+      </option>
+    </select>
+  </div>
+</section>
+
+<!-- TABLA DE USUARIOS (LUXURY BLACK & GOLD) -->
+<section class="table-container glass" *ngIf="!loading && usuariosFiltrados.length > 0">
+  <div class="table">
+    <div class="row head">
+      <span>Usuario</span>
+      <span>Nombres y Apellidos</span>
+      <span>Email</span>
+      <span>Rol Asignado</span>
+      <span>Estado</span>
+      <span class="text-right">Acciones</span>
+    </div>
+
+    <div class="row" *ngFor="let user of usuariosFiltrados">
+      <div class="user-cell">
+        <div class="avatar-mini-gold">
+          {{ (user.username || 'U').slice(0, 1).toUpperCase() }}
+        </div>
+        <div class="user-cell-info">
+          <strong class="username-text">&#64;{{ user.username }}</strong>
+        </div>
+      </div>
+
+      <span class="fullname-text">{{ user.nombres }} {{ user.apellidos }}</span>
+      <span class="email-text">{{ user.email }}</span>
+      
+      <div>
+        <span class="badge-role" 
+              [ngClass]="{
+                'admin': getRolName(user.idRol) === 'ADMIN',
+                'repartidor': getRolName(user.idRol) === 'REPARTIDOR',
+                'vendedor': getRolName(user.idRol) === 'VENDEDOR',
+                'cliente': getRolName(user.idRol) === 'CLIENTE'
+              }">
+          <span *ngIf="getRolName(user.idRol) === 'ADMIN'">👑</span>
+          <span *ngIf="getRolName(user.idRol) === 'VENDEDOR'">💼</span>
+          <span *ngIf="getRolName(user.idRol) === 'REPARTIDOR'">🛵</span>
+          <span *ngIf="getRolName(user.idRol) === 'CLIENTE'">🛒</span>
+          {{ getRolName(user.idRol) }}
+        </span>
+      </div>
+
+      <div>
+        <button
+          type="button"
+          class="badge-status-btn"
+          [class.active]="user.estado === 'A'"
+          (click)="toggleEstado(user)"
+          title="Haz clic para alternar estado Activo/Inactivo">
+          <span class="dot"></span>
+          {{ user.estado === 'A' ? 'Activo' : 'Inactivo' }}
+        </button>
+      </div>
+
+      <div class="actions-cell text-right">
+        <button type="button" class="btn-icon edit" (click)="openEditModal(user)" title="Editar usuario">
+          ✏️
+        </button>
+        <button type="button" class="btn-icon delete" (click)="deleteUser(user)" title="Eliminar usuario">
+          🗑️
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="empty-state glass" *ngIf="!loading && usuariosFiltrados.length === 0">
+  <p>No se encontraron usuarios registrados con los filtros actuales.</p>
+</div>
+
+<!-- MODAL: REGISTRAR / EDITAR USUARIO -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()">
+  <div class="modal-card glass" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>{{ editingUser ? '✏️ Editar Usuario' : '👤 Registrar Nuevo Usuario' }}</h3>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="userForm" (ngSubmit)="saveUser()" novalidate>
+      <div class="form-row">
+        <div class="form-group" [class.has-error]="userForm.get('nombres')?.invalid && userForm.get('nombres')?.touched">
+          <label>Nombres *</label>
+          <input type="text" formControlName="nombres" placeholder="Ej. Carlos">
+        </div>
+        <div class="form-group" [class.has-error]="userForm.get('apellidos')?.invalid && userForm.get('apellidos')?.touched">
+          <label>Apellidos *</label>
+          <input type="text" formControlName="apellidos" placeholder="Ej. Mendoza">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group" [class.has-error]="userForm.get('username')?.invalid && userForm.get('username')?.touched">
+          <label>Username (Nombre de Usuario) *</label>
+          <input type="text" formControlName="username" placeholder="carlosm">
+        </div>
+
+        <div class="form-group" [class.has-error]="userForm.get('email')?.invalid && userForm.get('email')?.touched">
+          <label>Correo Electrónico *</label>
+          <input type="email" formControlName="email" placeholder="carlos@empresa.com">
+        </div>
+      </div>
+
+      <div class="form-group" [class.has-error]="userForm.get('contrasena')?.invalid && userForm.get('contrasena')?.touched">
+        <label>
+          <span>Contraseña {{ editingUser ? '(dejar en blanco para no cambiar)' : '*' }}</span>
+        </label>
+        <input type="password" formControlName="contrasena" placeholder="{{ editingUser ? '••••••••••••' : 'Mínimo 6 caracteres' }}">
+      </div>
+
+      <div class="form-group" [class.has-error]="userForm.get('idRol')?.invalid && userForm.get('idRol')?.touched">
+        <label>Rol Asignado en el Sistema *</label>
+        <select formControlName="idRol">
+          <option value="" disabled>Selecciona un rol...</option>
+          <option *ngFor="let rol of roles" [value]="rol.idRol">
+            {{ rol.nombreRol }} {{ rol.descripcion ? '— ' + rol.descripcion : '' }}
+          </option>
+        </select>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : (editingUser ? 'Actualizar Usuario' : 'Crear Usuario') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

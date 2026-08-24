@@ -1,0 +1,120 @@
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">Marketing y Ventas</p>
+    <h1>Gestión de Promociones</h1>
+    <p class="muted">Crea y administra descuentos, cupones y ofertas especiales para los clientes.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" (click)="openNewModal()">
+      ✨ + Nueva Promoción
+    </button>
+  </div>
+</section>
+
+<!-- BÚSQUEDA -->
+<section class="filters-bar glass">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre de promoción...">
+  </div>
+</section>
+
+<!-- GRID DE PROMOCIONES -->
+<section class="cards" *ngIf="!loading && promocionesFiltradas.length > 0">
+  <article *ngFor="let prom of promocionesFiltradas" class="product glass">
+    <div class="product-header">
+      <span class="code-badge">{{ prom.tipoDescuento }}</span>
+      <div class="stock-badge" [class.low]="prom.estado !== 'A'">
+        {{ prom.estado === 'A' ? 'Activo' : 'Inactivo' }}
+      </div>
+    </div>
+
+    <h3>{{ prom.nombre }}</h3>
+    <p class="desc">{{ prom.descripcion || 'Sin descripción adicional' }}</p>
+
+    <div class="price-row">
+      <div>
+        <span class="price-label">Descuento</span>
+        <strong class="price gold-txt">
+          {{ prom.tipoDescuento === 'PORCENTAJE' ? (prom.valorDescuento + '%') : ('S/ ' + prom.valorDescuento.toFixed(2)) }}
+        </strong>
+      </div>
+
+      <div class="stock-adjust" style="flex-direction: column; align-items: flex-end; font-size: 0.8rem; gap: 0.2rem;">
+        <span><strong>Inicio:</strong> {{ prom.fechaInicio | date:'shortDate' }}</span>
+        <span><strong>Fin:</strong> {{ prom.fechaFin | date:'shortDate' }}</span>
+      </div>
+    </div>
+
+    <div class="card-actions">
+      <button type="button" class="btn-action edit" (click)="openEditModal(prom)">
+        ✏️ Editar
+      </button>
+      <button type="button" class="btn-action delete" (click)="deletePromocion(prom)">
+        🗑️ Eliminar
+      </button>
+    </div>
+  </article>
+</section>
+
+<div class="empty-state glass" *ngIf="!loading && promocionesFiltradas.length === 0">
+  <p>No se encontraron promociones.</p>
+</div>
+
+<!-- MODAL CREAR / EDITAR -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3>{{ editingPromocion ? '✏️ Editar Promoción' : '✨ Nueva Promoción' }}</h3>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="savePromocion()">
+      
+      <label>
+        Nombre de la Promoción *
+        <input type="text" formControlName="nombre" placeholder="Ej. Cyber Days 2026">
+      </label>
+
+      <label>
+        Descripción
+        <input type="text" formControlName="descripcion" placeholder="Detalles de la promo...">
+      </label>
+
+      <div class="form-row">
+        <label>
+          Tipo de Descuento *
+          <select formControlName="tipoDescuento">
+            <option value="PORCENTAJE">Porcentaje (%)</option>
+            <option value="MONTO">Monto Fijo (S/)</option>
+          </select>
+        </label>
+
+        <label>
+          Valor del Descuento *
+          <input type="number" step="0.1" formControlName="valorDescuento">
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Fecha Inicio *
+          <input type="datetime-local" formControlName="fechaInicio">
+        </label>
+
+        <label>
+          Fecha Fin *
+          <input type="datetime-local" formControlName="fechaFin">
+        </label>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : (editingPromocion ? 'Actualizar' : 'Guardar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

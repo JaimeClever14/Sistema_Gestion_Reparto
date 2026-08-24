@@ -1,0 +1,229 @@
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">Gestión de Ventas y Despacho</p>
+    <h1>Pedidos Comercial y Entregas</h1>
+    <p class="muted">Crea pedidos, selecciona ítems del catálogo y actualiza estados de despacho en tiempo real.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" (click)="openNewModal()">
+      🛍️ + Nuevo Pedido
+    </button>
+  </div>
+</section>
+
+<!-- FILTROS Y BÚSQUEDA -->
+<section class="filters-bar glass">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por código de pedido o nombre de cliente...">
+  </div>
+
+  <div class="select-box">
+    <select [(ngModel)]="selectedEstado">
+      <option value="TODOS">Todos los estados</option>
+      <option value="ACTIVO">Activos (En proceso)</option>
+      <option value="COMPLETADO">Completados / Entregados</option>
+    </select>
+  </div>
+</section>
+
+<!-- TABLA DE PEDIDOS -->
+<section class="table-container glass" *ngIf="!loading && pedidosFiltrados.length > 0">
+  <div class="table">
+    <div class="row head">
+      <span>Código</span>
+      <span>Cliente</span>
+      <span>Fecha / Hora</span>
+      <span>Monto Total</span>
+      <span>Estado</span>
+      <span>Acciones</span>
+    </div>
+
+    <div class="row" *ngFor="let order of pedidosFiltrados">
+      <strong>{{ order.codigoPedido || ('PED-' + order.idPedido) }}</strong>
+      <div>
+        <p class="client-name">{{ getClienteNombre(order.cliente) }}</p>
+        <span class="client-doc" *ngIf="order.cliente?.numeroDocumento">Doc: {{ order.cliente?.numeroDocumento }}</span>
+      </div>
+      <span class="date">{{ order.fechaPedido ? (order.fechaPedido | date:'short') : 'Hoy' }}</span>
+      <strong class="total">S/ {{ (order.montoTotal || 0).toFixed(2) }}</strong>
+
+      <div class="status-cell">
+        <span class="badge-status" [class.completed]="order.estado === 'F'">
+          {{ order.estado === 'A' ? 'En Proceso' : (order.estado === 'F' ? 'Completado' : 'Cancelado') }}
+        </span>
+      </div>
+
+      <div class="table-actions">
+        <button type="button" class="btn-icon" (click)="openDetailModal(order)" title="Ver Detalle">
+          👁️
+        </button>
+        <button type="button" class="btn-icon complete" *ngIf="order.estado === 'A'" (click)="cambiarEstado(order, 'F')" title="Marcar Entregado">
+          ✅
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="empty-state glass" *ngIf="!loading && pedidosFiltrados.length === 0">
+  <p>No hay pedidos registrados que coincidan con la búsqueda.</p>
+</div>
+
+<!-- MODAL CREADOR DE NUEVO PEDIDO -->
+<div class="modal-overlay" *ngIf="showModalNew">
+  <div class="modal-card glass max-w-lg">
+    <div class="modal-header">
+      <h3>🛍️ Creador de Nuevo Pedido</h3>
+      <button type="button" class="close-btn" (click)="closeNewModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Cliente Comercial *</label>
+        <select [(ngModel)]="selectedClienteId">
+          <option *ngFor="let c of clientes" [value]="c.idCliente">
+            {{ getClienteNombre(c) }} (Doc: {{ c.numeroDocumento || 'S/N' }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Dirección de Entrega
+          <input type="text" [(ngModel)]="direccionEntrega" placeholder="Dirección de despacho...">
+        </label>
+        <label>
+          Observaciones
+          <input type="text" [(ngModel)]="observaciones" placeholder="Ej. Entregar en la tarde">
+        </label>
+      </div>
+
+      <hr class="divider">
+
+      <!-- SELECTOR DE PRODUCTOS E ÍTEMS -->
+      <h4>Añadir Productos al Pedido</h4>
+      <div class="item-builder">
+        <select [(ngModel)]="selectedProductoId" class="prod-select">
+          <option *ngFor="let p of productos" [value]="p.idProducto">
+            {{ p.nombre }} - S/ {{ p.precioVenta.toFixed(2) }} (Stock: {{ p.stock }})
+          </option>
+        </select>
+        <input type="number" [(ngModel)]="itemCantidad" min="1" class="qty-input">
+        <button type="button" class="btn-add" (click)="addItemToCart()">+ Agregar</button>
+      </div>
+
+      <!-- TABLA DEL CARRITO/DETALLE -->
+      <div class="cart-table" *ngIf="cartItems.length > 0">
+        <div class="cart-row head">
+          <span>Producto</span>
+          <span>Cant.</span>
+          <span>P.Unit</span>
+          <span>Subtotal</span>
+          <span></span>
+        </div>
+        <div class="cart-row" *ngFor="let item of cartItems; let i = index">
+          <span>{{ item.producto.nombre }}</span>
+          <span>{{ item.cantidad }}</span>
+          <span>S/ {{ item.precioUnitario.toFixed(2) }}</span>
+          <strong>S/ {{ item.subtotal.toFixed(2) }}</strong>
+          <button type="button" class="btn-remove" (click)="removeItemFromCart(i)">✕</button>
+        </div>
+      </div>
+
+      <div class="cart-summary" *ngIf="cartItems.length > 0">
+        <div><span>Subtotal (sin IGV):</span> <strong>S/ {{ subtotalCarrito.toFixed(2) }}</strong></div>
+        <div><span>IGV (18%):</span> <strong>S/ {{ igvCarrito.toFixed(2) }}</strong></div>
+        <div class="total-line"><span>TOTAL PEDIDO:</span> <strong>S/ {{ totalCarrito.toFixed(2) }}</strong></div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeNewModal()">Cancelar</button>
+      <button type="button" class="btn-primary" (click)="saveOrder()" [disabled]="saving || cartItems.length === 0">
+        {{ saving ? 'Procesando...' : 'Confirmar Pedido 🚀' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VER DETALLE DE PEDIDO -->
+<div class="modal-overlay" *ngIf="showModalDetail && selectedPedido">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3>📋 Detalle del Pedido #{{ selectedPedido.codigoPedido || selectedPedido.idPedido }}</h3>
+      <button type="button" class="close-btn" (click)="closeDetailModal()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="detail-grid">
+        <div>
+          <span class="label">Cliente:</span>
+          <strong>{{ getClienteNombre(selectedPedido.cliente) }}</strong>
+        </div>
+        <div>
+          <span class="label">Estado:</span>
+          <span class="badge-status">{{ selectedPedido.estado === 'A' ? 'En Proceso' : 'Completado' }}</span>
+        </div>
+        <div>
+          <span class="label">Dirección:</span>
+          <p>{{ selectedPedido.direccionEntrega || 'Tienda Principal' }}</p>
+        </div>
+      </div>
+
+      <h4 class="mt-4">Productos en el pedido</h4>
+      <div class="cart-table">
+        <div class="cart-row head">
+          <span>Producto</span>
+          <span>Cantidad</span>
+          <span>Precio</span>
+          <span>Subtotal</span>
+        </div>
+        <div class="cart-row" *ngFor="let d of selectedPedido.detalles">
+          <span>{{ d.producto?.nombre || ('Producto #' + d.idProducto) }}</span>
+          <span>{{ d.cantidad }}</span>
+          <span>S/ {{ d.precioUnitario.toFixed(2) }}</span>
+          <strong>S/ {{ d.subtotal.toFixed(2) }}</strong>
+        </div>
+      </div>
+
+      <div class="cart-summary">
+        <div class="total-line"><span>TOTAL FINAL:</span> <strong>S/ {{ (selectedPedido.montoTotal || 0).toFixed(2) }}</strong></div>
+      </div>
+
+      <hr class="divider mt-4">
+      
+      <h4 class="mt-4">🚚 Despacho / Asignación</h4>
+      
+      <div *ngIf="$any(selectedPedido).repartidorAsignado; else noAsignado" class="repartidor-info">
+        <p><strong>Repartidor Asignado:</strong> {{ $any(selectedPedido).repartidorAsignado.nombres }} {{ $any(selectedPedido).repartidorAsignado.apellidos }}</p>
+      </div>
+      
+      <ng-template #noAsignado>
+        <div class="form-row align-items-end" *ngIf="selectedPedido.estado === 'A'">
+          <div class="form-group" style="flex: 1;">
+            <label>Seleccionar Repartidor</label>
+            <select [(ngModel)]="selectedRepartidorId">
+              <option *ngIf="repartidores.length === 0" value="">Cargando repartidores...</option>
+              <option *ngFor="let rep of repartidores" [value]="rep.idUsuario">
+                {{ rep.nombres }} {{ rep.apellidos }} ({{ rep.username }})
+              </option>
+            </select>
+          </div>
+          <button type="button" class="btn-primary" [disabled]="!selectedRepartidorId || saving" (click)="asignarRepartidor()">
+            Asignar
+          </button>
+        </div>
+        <p *ngIf="selectedPedido.estado !== 'A'" class="muted">
+          Este pedido ya está completado o cancelado.
+        </p>
+      </ng-template>
+
+    </div>
+
+    <div class="modal-footer">
+      <button type="button" class="btn-secondary" (click)="closeDetailModal()">Cerrar</button>
+    </div>
+  </div>
+</div>

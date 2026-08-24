@@ -1,0 +1,130 @@
+<section class="dashboard-header">
+  <div class="header-titles">
+    <div class="badge-gold-subtle">RESUMEN EJECUTIVO EN TIEMPO REAL</div>
+    <h1 class="header-main-title">Panel de Control General</h1>
+    <p class="header-sub">Monitorea pedidos, existencias de almacén, flujo de ventas y cartera de clientes.</p>
+  </div>
+  
+  <div class="header-actions">
+    <button type="button" class="btn-primary" routerLink="/admin/pedidos">
+      <span>➕ Nuevo Pedido</span>
+    </button>
+    <button type="button" class="btn-refresh" (click)="cargarDatos()" title="Recargar métricas">
+      <span>🔄 Actualizar</span>
+    </button>
+  </div>
+</section>
+
+<!-- KPI STATS CARDS (GOLD & BLACK ACCENTS) -->
+<section class="stats-grid">
+  <article *ngFor="let stat of stats" class="stat-card glass" [class]="'tone-' + stat.tone">
+    <div class="stat-card-header">
+      <span class="stat-icon-wrapper">{{ stat.icon }}</span>
+      <span class="stat-badge-tag">{{ stat.label }}</span>
+    </div>
+    <div class="stat-body">
+      <strong class="stat-number">{{ stat.value }}</strong>
+      <p class="stat-desc">{{ stat.description }}</p>
+    </div>
+    <div class="stat-gold-bar"></div>
+  </article>
+</section>
+
+<!-- QUICK ACTION SHORTCUTS -->
+<section class="quick-actions-bar glass">
+  <span class="quick-title">⚡ Acciones Rápidas:</span>
+  <div class="quick-buttons">
+    <a routerLink="/admin/productos" class="quick-btn">
+      <span>🍾 Catálogo & Stock</span>
+    </a>
+    <a routerLink="/admin/clientes" class="quick-btn">
+      <span>👥 Directorio Clientes</span>
+    </a>
+    <a routerLink="/admin/pedidos" class="quick-btn">
+      <span>🛍️ Ventas & Despacho</span>
+    </a>
+    <a routerLink="/admin/pagos" class="quick-btn">
+      <span>💳 Créditos & Cuotas</span>
+    </a>
+  </div>
+</section>
+
+<!-- TWO COLUMN OPERATIONAL GRID -->
+<section class="operational-grid">
+  
+  <!-- LEFT: Stock Alerts & Low Inventory -->
+  <article class="panel glass">
+    <div class="panel-header">
+      <div class="panel-title-wrap">
+        <span class="panel-badge-alert">⚠️ ALERTA DE STOCK</span>
+        <h2 class="section-title">Productos Críticos / Por Agotarse</h2>
+      </div>
+      <a routerLink="/admin/productos" class="gold-link">Ver todo el inventario →</a>
+    </div>
+
+    <div class="custom-table-wrap">
+      <div class="table-head-row">
+        <span>Producto</span>
+        <span>Stock Actual</span>
+        <span>Mínimo</span>
+        <span class="text-right">Precio Venta</span>
+      </div>
+      
+      <div class="table-item-row" *ngFor="let prod of productos">
+        <div class="prod-col-name">
+          <strong class="prod-title">{{ prod.nombre }}</strong>
+          <span class="prod-code">{{ prod.codigoBarras || ('PROD-' + prod.idProducto) }}</span>
+        </div>
+        <div>
+          <span class="stock-pill" [class.danger]="prod.stock <= (prod.stockMinimo || 5)">
+            {{ prod.stock }} unid.
+          </span>
+        </div>
+        <div class="min-stock-text">
+          {{ prod.stockMinimo || 5 }} unid.
+        </div>
+        <div class="text-right">
+          <strong class="gold-price">S/ {{ prod.precioVenta.toFixed(2) }}</strong>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="productos.length === 0">
+        <p>No hay productos registrados en el inventario.</p>
+      </div>
+    </div>
+  </article>
+
+  <!-- RIGHT: Recent Orders -->
+  <article class="panel glass">
+    <div class="panel-header">
+      <div class="panel-title-wrap">
+        <span class="panel-badge-gold">🛍️ TRANSACCIONES RECIENTES</span>
+        <h2 class="section-title">Últimos Pedidos Registrados</h2>
+      </div>
+      <a routerLink="/admin/pedidos" class="gold-link">Gestionar pedidos →</a>
+    </div>
+
+    <div class="order-feed">
+      <div class="order-card-item" *ngFor="let order of pedidos">
+        <div class="order-avatar-box">
+          <span>📦</span>
+        </div>
+        <div class="order-client-info">
+          <strong class="order-code">{{ order.codigoPedido || ('PED-' + order.idPedido) }}</strong>
+          <p class="order-client-name">{{ getClienteNombre(order.cliente) }}</p>
+        </div>
+        <div class="order-financial-info">
+          <strong class="gold-price">S/ {{ (order.montoTotal || 0).toFixed(2) }}</strong>
+          <span class="order-status-badge" [class.completed]="order.estado !== 'A' && order.estado !== 'Pendiente'">
+            {{ order.estado === 'A' ? 'En Proceso' : (order.estado || 'Completado') }}
+          </span>
+        </div>
+      </div>
+
+      <div class="empty-state" *ngIf="pedidos.length === 0">
+        <p>No se registran pedidos recientes hoy.</p>
+      </div>
+    </div>
+  </article>
+
+</section>

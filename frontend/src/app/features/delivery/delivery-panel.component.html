@@ -1,0 +1,152 @@
+<div class="dp-root">
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="dp-header">
+    <div class="dp-header-inner">
+      <div class="dp-brand">
+        <div class="dp-logo">🛵</div>
+        <div>
+          <h1 class="dp-title">RomaPedidos</h1>
+          <span class="dp-sub">Panel de Reparto &amp; Logística</span>
+        </div>
+      </div>
+      <div class="dp-user-pill">
+        <div class="dp-avatar">{{ (auth.getUsername() || 'R')[0].toUpperCase() }}</div>
+        <div class="dp-user-meta">
+          <strong>{{ auth.getUsername() }}</strong>
+          <span class="dp-role-tag">🛵 REPARTIDOR</span>
+        </div>
+        <button class="dp-logout" (click)="logout()">🚪 Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════ TOAST ══════════════ -->
+  <div class="dp-toast" *ngIf="toast">{{ toast }}</div>
+
+  <!-- ══════════════ KPI STRIP ══════════════ -->
+  <section class="dp-kpi-row">
+    <div class="dp-kpi-card orange">
+      <span class="dp-kpi-ico">📦</span>
+      <div><p class="dp-kpi-lbl">Por Entregar</p><h3 class="dp-kpi-num">{{ kpiPending }}</h3></div>
+    </div>
+    <div class="dp-kpi-card blue">
+      <span class="dp-kpi-ico">🛵</span>
+      <div><p class="dp-kpi-lbl">En Ruta Ahora</p><h3 class="dp-kpi-num">{{ kpiOnWay }}</h3></div>
+    </div>
+    <div class="dp-kpi-card green">
+      <span class="dp-kpi-ico">✅</span>
+      <div><p class="dp-kpi-lbl">Entregados</p><h3 class="dp-kpi-num">{{ kpiDone }}</h3></div>
+    </div>
+    <div class="dp-kpi-card gold">
+      <span class="dp-kpi-ico">💵</span>
+      <div><p class="dp-kpi-lbl">Por Cobrar</p><h3 class="dp-kpi-num">S/ {{ kpiCobrar | number:'1.2-2' }}</h3></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ FILTROS ══════════════ -->
+  <section class="dp-filters-bar">
+    <div class="dp-search-box">
+      <span>🔍</span>
+      <input type="text" [(ngModel)]="search" placeholder="Buscar por #PED, cliente o dirección...">
+    </div>
+    <div class="dp-filter-tabs">
+      <button class="dp-ftab" [class.active]="filter==='ALL'"     (click)="filter='ALL'">Todos ({{ pedidos.length }})</button>
+      <button class="dp-ftab warn" [class.active]="filter==='PENDING'" (click)="filter='PENDING'">⏳ Pendientes ({{ kpiPending }})</button>
+      <button class="dp-ftab info" [class.active]="filter==='ONWAY'"   (click)="filter='ONWAY'">🛵 En Ruta ({{ kpiOnWay }})</button>
+      <button class="dp-ftab good" [class.active]="filter==='DONE'"    (click)="filter='DONE'">✅ Entregados ({{ kpiDone }})</button>
+    </div>
+  </section>
+
+  <!-- ══════════════ CARDS DE PEDIDOS ══════════════ -->
+  <main class="dp-main">
+
+    <div class="dp-cards-grid" *ngIf="!loading && pedidosFiltrados.length > 0">
+
+      <div class="dp-card" *ngFor="let p of pedidosFiltrados" [class.card-done]="p.estado==='F'">
+
+        <!-- Cabecera de la tarjeta -->
+        <div class="dp-card-head">
+          <div>
+            <span class="dp-code-tag">#{{ p.codigoPedido }}</span>
+            <small class="dp-date">{{ p.fechaPedido | date:'dd/MM/yyyy HH:mm' }}</small>
+          </div>
+          <span class="dp-estado-pill"
+            [class.est-pend]="p.estado==='A'"
+            [class.est-ruta]="p.estado==='E'"
+            [class.est-done]="p.estado==='F'">
+            <span *ngIf="p.estado==='A'">⏳ Pendiente</span>
+            <span *ngIf="p.estado==='E'">🛵 En Camino</span>
+            <span *ngIf="p.estado==='F'">✅ Entregado</span>
+          </span>
+        </div>
+
+        <!-- Datos del cliente -->
+        <div class="dp-client-section">
+          <div class="dp-client-row">
+            <h4>👤 {{ nombreCliente(p.cliente) }}</h4>
+            <span class="dp-doc" *ngIf="p.cliente?.numeroDocumento">Doc: {{ p.cliente?.numeroDocumento }}</span>
+          </div>
+
+          <div class="dp-address-box">
+            <span>📍</span>
+            <p>{{ p.direccionEntrega || 'Sin dirección registrada' }}</p>
+            <button class="dp-map-btn" (click)="abrirMapa(p.direccionEntrega)">🗺️ Mapa</button>
+          </div>
+
+          <div class="dp-phone-row" *ngIf="p.cliente?.telefono">
+            <span>📞 {{ p.cliente?.telefono }}</span>
+            <a [href]="'tel:' + p.cliente?.telefono" class="dp-call-btn">Llamar</a>
+          </div>
+
+          <div class="dp-obs" *ngIf="p.observaciones">
+            💬 {{ p.observaciones }}
+          </div>
+        </div>
+
+        <!-- Productos -->
+        <div class="dp-products" *ngIf="p.detalles && p.detalles.length > 0">
+          <p class="dp-prods-title">📦 Artículos ({{ p.detalles.length }}):</p>
+          <div class="dp-prod-row" *ngFor="let d of p.detalles">
+            <span>{{ d.cantidad }}x {{ d.producto?.nombre || ('Producto #' + d.idProducto) }}</span>
+            <strong class="gold-txt">S/ {{ d.subtotal | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <!-- Total y acciones -->
+        <div class="dp-card-foot">
+          <div class="dp-total-row">
+            <span>Total a cobrar:</span>
+            <span class="dp-total-amount">S/ {{ p.montoTotal | number:'1.2-2' }}</span>
+          </div>
+          <div class="dp-actions">
+            <button class="dp-action-btn start" *ngIf="p.estado==='A'" (click)="iniciarRuta(p)">
+              🛵 Iniciar Ruta
+            </button>
+            <button class="dp-action-btn confirm" *ngIf="p.estado==='E'" (click)="confirmarEntrega(p)">
+              ✅ Confirmar Entrega
+            </button>
+            <span class="dp-done-msg" *ngIf="p.estado==='F'">
+              ✨ Entregado correctamente
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div class="dp-loading" *ngIf="loading">
+      <div class="dp-spinner"></div>
+      <p>Cargando pedidos asignados...</p>
+    </div>
+
+    <!-- Vacío -->
+    <div class="dp-empty" *ngIf="!loading && pedidosFiltrados.length===0">
+      <span>🛵</span>
+      <h3>Sin pedidos en esta categoría</h3>
+      <p>Todos los despachos están al día.</p>
+    </div>
+
+  </main>
+</div>

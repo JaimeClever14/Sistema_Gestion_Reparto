@@ -1,0 +1,457 @@
+<div class="login-wrapper">
+  <!-- Dynamic Ambient Animated Lights -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+  <div class="ambient-glow glow-3"></div>
+
+  <!-- LEFT PANEL: Luxury Brand & Feature Showcase -->
+  <div class="login-split-left">
+    <div class="brand-container">
+      <!-- Animated Emblem -->
+      <div class="brand-badge-wrapper">
+        <div class="emblem-halo"></div>
+        <div class="logo-box">
+          <span class="logo-letter">R</span>
+          <div class="logo-sparkle"></div>
+        </div>
+      </div>
+
+      <div class="brand-headings">
+        <div class="platform-tag">
+          <span class="tag-dot"></span>
+          PLATAFORMA EMPRESARIAL
+        </div>
+        <h1 class="brand-title">Web Roma <span class="highlight-text">Pedidos</span></h1>
+        <p class="brand-description">
+          Ecosistema integral de alta velocidad para gestión de ventas, catálogo multimarca, créditos y seguimiento logístico.
+        </p>
+      </div>
+
+      <!-- Interactive Feature Highlights -->
+      <div class="feature-cards">
+        <div class="feature-card">
+          <div class="feature-icon bg-blue">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+            </svg>
+          </div>
+          <div class="feature-info">
+            <h4>Pedidos en Tiempo Real</h4>
+            <p>Sincronización instantánea de órdenes y stock sin retrasos.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-amber">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+            </svg>
+          </div>
+          <div class="feature-info">
+            <h4>Catálogo & Créditos Inteligentes</h4>
+            <p>Control de cuotas, límites de crédito y categorización Sunat.</p>
+          </div>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon bg-emerald">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="1" y="3" width="15" height="13"></rect>
+              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+              <circle cx="5.5" cy="18.5" r="2.5"></circle>
+              <circle cx="18.5" cy="18.5" r="2.5"></circle>
+            </svg>
+          </div>
+          <div class="feature-info">
+            <h4>Despacho & Rutas de Entrega</h4>
+            <p>Módulo especializado para repartidores y confirmación de recepción.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Status Live Badge -->
+      <div class="live-status-card">
+        <div class="status-indicator">
+          <span class="status-ping"></span>
+          <span class="status-solid"></span>
+        </div>
+        <div class="status-details">
+          <span class="status-title">Servidores Activos • API Gateway v4.1</span>
+          <span class="status-sub">Autenticación segura JWT con cifrado AES-256</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: Glassmorphism Login Card -->
+  <div class="login-split-right">
+    <div class="login-card-container">
+      
+      <!-- Card Header / Segmented Controls -->
+      <div class="segmented-control">
+        <div class="tab-slider" [class.register-active]="isRegisterTab"></div>
+        <button
+          type="button"
+          class="segment-btn"
+          [class.active]="!isRegisterTab"
+          (click)="switchTab(false)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+            <polyline points="10 17 15 12 10 7"></polyline>
+            <line x1="15" y1="12" x2="3" y2="12"></line>
+          </svg>
+          Iniciar Sesión
+        </button>
+        <button
+          type="button"
+          class="segment-btn"
+          [class.active]="isRegisterTab"
+          (click)="switchTab(true)">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="8.5" cy="7" r="4"></circle>
+            <line x1="20" y1="8" x2="20" y2="14"></line>
+            <line x1="23" y1="11" x2="17" y2="11"></line>
+          </svg>
+          Crear Cuenta
+        </button>
+      </div>
+
+      <!-- Alerts / Feedback Banners -->
+      <div class="alert-banner error" *ngIf="errorMessage">
+        <div class="alert-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="alert-message">{{ errorMessage }}</div>
+        <button type="button" class="alert-close" (click)="errorMessage = ''">×</button>
+      </div>
+
+      <div class="alert-banner success" *ngIf="successMessage">
+        <div class="alert-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+        <div class="alert-message">{{ successMessage }}</div>
+        <button type="button" class="alert-close" (click)="successMessage = ''">×</button>
+      </div>
+
+      <!-- ================= LOGIN TAB ================= -->
+      <div *ngIf="!isRegisterTab" class="form-wrapper slide-fade">
+        <div class="form-intro">
+          <h2 class="welcome-heading">¡Bienvenido de nuevo! 👋</h2>
+          <p class="welcome-subtitle">Ingresa tus credenciales para acceder al panel de control.</p>
+        </div>
+
+        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+          
+          <!-- Input Username -->
+          <div class="form-field" [class.has-error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched">
+            <label for="login-username">
+              <span>Usuario o Identificador</span>
+            </label>
+            <div class="input-shell">
+              <span class="field-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <input
+                id="login-username"
+                type="text"
+                formControlName="username"
+                placeholder="Ej. admin o tu usuario"
+                autocomplete="username">
+            </div>
+          </div>
+
+          <!-- Input Password -->
+          <div class="form-field" [class.has-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+            <div class="field-label-row">
+              <label for="login-password">
+                <span>Contraseña</span>
+              </label>
+              <button type="button" class="forgot-link" (click)="openForgotPassword()">
+                ¿Olvidaste tu contraseña?
+              </button>
+            </div>
+            <div class="input-shell">
+              <span class="field-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input
+                id="login-password"
+                [type]="showPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="••••••••••••"
+                autocomplete="current-password">
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleShowPassword()"
+                title="{{ showPassword ? 'Ocultar contraseña' : 'Ver contraseña' }}">
+                <svg *ngIf="!showPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg *ngIf="showPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Remember Me Switch -->
+          <div class="form-aux-row">
+            <label class="checkbox-container">
+              <input type="checkbox" [(ngModel)]="rememberMe" [ngModelOptions]="{standalone: true}">
+              <span class="custom-checkmark"></span>
+              <span class="checkbox-text">Recordar mi cuenta en este equipo</span>
+            </label>
+          </div>
+
+          <!-- Primary Submit Button -->
+          <button type="submit" class="submit-btn" [disabled]="loading">
+            <span class="btn-shine"></span>
+            <div class="btn-content">
+              <span *ngIf="!loading" class="btn-text">
+                Ingresar a la Plataforma
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+              <div *ngIf="loading" class="btn-loading">
+                <span class="modern-spinner"></span>
+                <span>Iniciando sesión segura...</span>
+              </div>
+            </div>
+          </button>
+        </form>
+
+        <!-- Quick Demo Switcher -->
+        <div class="demo-section">
+          <div class="demo-header-divider">
+            <span>PERFILES DE ACCESO RÁPIDO</span>
+          </div>
+          <div class="demo-grid">
+            <button
+              *ngFor="let acc of demoAccounts"
+              type="button"
+              class="demo-chip"
+              [class.selected]="selectedDemoRole === acc.role"
+              (click)="applyDemoAccount(acc)"
+              title="{{ acc.description }}">
+              <span class="demo-icon">{{ acc.icon }}</span>
+              <div class="demo-text">
+                <span class="demo-name">{{ acc.name }}</span>
+                <span class="demo-badge">{{ acc.badge }}</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= REGISTER TAB ================= -->
+      <div *ngIf="isRegisterTab" class="form-wrapper slide-fade">
+        <div class="form-intro">
+          <h2 class="welcome-heading">Crear Nueva Cuenta 🚀</h2>
+          <p class="welcome-subtitle">Únete y gestiona tus compras y pedidos fácilmente.</p>
+        </div>
+
+        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+          
+          <div class="grid-2-cols">
+            <!-- Nombres -->
+            <div class="form-field" [class.has-error]="registerForm.get('nombres')?.invalid && registerForm.get('nombres')?.touched">
+              <label for="reg-nombres">Nombres</label>
+              <div class="input-shell">
+                <input id="reg-nombres" type="text" formControlName="nombres" placeholder="Ej. Carlos">
+              </div>
+            </div>
+
+            <!-- Apellidos -->
+            <div class="form-field" [class.has-error]="registerForm.get('apellidos')?.invalid && registerForm.get('apellidos')?.touched">
+              <label for="reg-apellidos">Apellidos</label>
+              <div class="input-shell">
+                <input id="reg-apellidos" type="text" formControlName="apellidos" placeholder="Ej. Mendoza">
+              </div>
+            </div>
+          </div>
+
+          <!-- Username -->
+          <div class="form-field" [class.has-error]="registerForm.get('username')?.invalid && registerForm.get('username')?.touched">
+            <label for="reg-username">Nombre de Usuario</label>
+            <div class="input-shell">
+              <span class="field-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </span>
+              <input id="reg-username" type="text" formControlName="username" placeholder="carlosmendoza">
+            </div>
+          </div>
+
+          <!-- Email -->
+          <div class="form-field" [class.has-error]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched">
+            <label for="reg-email">Correo Electrónico</label>
+            <div class="input-shell">
+              <span class="field-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
+              </span>
+              <input id="reg-email" type="email" formControlName="email" placeholder="carlos@empresa.com">
+            </div>
+          </div>
+
+          <!-- Password with Strength Meter -->
+          <div class="form-field" [class.has-error]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched">
+            <label for="reg-password">Contraseña de Seguridad</label>
+            <div class="input-shell">
+              <span class="field-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </span>
+              <input
+                id="reg-password"
+                [type]="showRegisterPassword ? 'text' : 'password'"
+                formControlName="password"
+                placeholder="Mínimo 6 caracteres">
+              <button
+                type="button"
+                class="password-toggle-btn"
+                (click)="toggleShowRegisterPassword()"
+                title="Mostrar/Ocultar contraseña">
+                <svg *ngIf="!showRegisterPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+                <svg *ngIf="showRegisterPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                  <line x1="1" y1="1" x2="23" y2="23"></line>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Password Strength Bar -->
+            <div class="strength-meter" *ngIf="registerForm.get('password')?.value">
+              <div class="strength-bar-bg">
+                <div
+                  class="strength-bar-fill"
+                  [style.width.%]="passwordStrengthScore"
+                  [style.background-color]="passwordStrengthColor">
+                </div>
+              </div>
+              <div class="strength-label">
+                <span>Seguridad:</span>
+                <strong [style.color]="passwordStrengthColor">{{ passwordStrengthLabel }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Terms acceptance -->
+          <div class="form-aux-row">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="acceptTerms">
+              <span class="custom-checkmark"></span>
+              <span class="checkbox-text">Acepto los términos de servicio y políticas de privacidad</span>
+            </label>
+          </div>
+
+          <!-- Submit Register Button -->
+          <button type="submit" class="submit-btn register-theme" [disabled]="loading">
+            <span class="btn-shine"></span>
+            <div class="btn-content">
+              <span *ngIf="!loading" class="btn-text">
+                Registrar Cuenta y Empezar
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </span>
+              <div *ngIf="loading" class="btn-loading">
+                <span class="modern-spinner"></span>
+                <span>Creando tu cuenta...</span>
+              </div>
+            </div>
+          </button>
+        </form>
+      </div>
+
+      <!-- Card Footer Security Badge -->
+      <div class="card-footer-badge">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+        </svg>
+        <span>Conexión protegida con cifrado SSL 256-bit</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- MODAL: RECUPERAR CONTRASEÑA -->
+  <div class="modal-backdrop" *ngIf="showForgotModal" (click)="closeForgotPassword()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-icon-badge">
+          <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+        </div>
+        <h3>Recuperar Contraseña</h3>
+        <button type="button" class="modal-close-btn" (click)="closeForgotPassword()">✕</button>
+      </div>
+
+      <div class="modal-body" *ngIf="!forgotSent">
+        <p>Ingresa tu correo electrónico registrado y te enviaremos las instrucciones para restablecer tu contraseña.</p>
+        <div class="form-field">
+          <label>Correo Electrónico</label>
+          <div class="input-shell">
+            <input
+              type="email"
+              [(ngModel)]="forgotEmail"
+              placeholder="tu-correo@empresa.com"
+              (keyup.enter)="sendPasswordRecovery()">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-body success-state" *ngIf="forgotSent">
+        <div class="success-icon-bubble">✓</div>
+        <h4>¡Enlace enviado con éxito!</h4>
+        <p>Hemos enviado un correo a <strong>{{ forgotEmail }}</strong> con el enlace de recuperación temporal.</p>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="modal-btn-secondary" (click)="closeForgotPassword()">
+          {{ forgotSent ? 'Cerrar' : 'Cancelar' }}
+        </button>
+        <button
+          type="button"
+          class="modal-btn-primary"
+          *ngIf="!forgotSent"
+          [disabled]="!forgotEmail"
+          (click)="sendPasswordRecovery()">
+          Enviar Instrucciones
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

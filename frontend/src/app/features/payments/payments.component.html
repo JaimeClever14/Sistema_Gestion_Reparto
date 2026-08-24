@@ -1,0 +1,251 @@
+<!-- CABECERA -->
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">Cobros y Financiamiento</p>
+    <h1>Pagos y Créditos</h1>
+    <p class="muted">Registra pagos con Yape, Plin, efectivo o transferencia. Gestiona créditos y cuotas de clientes.</p>
+  </div>
+
+  <div class="head-actions">
+    <button type="button" class="btn-primary" (click)="openNewPagoModal()">
+      💳 Registrar Pago
+    </button>
+  </div>
+</section>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button type="button" class="tab-btn" [class.active]="activeTab === 'PAGOS'" (click)="activeTab = 'PAGOS'">
+    💰 Pagos Recibidos
+    <span class="tab-count">{{ pagos.length }}</span>
+  </button>
+  <button type="button" class="tab-btn" [class.active]="activeTab === 'CREDITOS'" (click)="activeTab = 'CREDITOS'">
+    📋 Créditos Activos
+    <span class="tab-count">{{ creditos.length }}</span>
+  </button>
+</div>
+
+<!-- RESUMEN DE MÉTRICAS -->
+<section class="metrics-row" *ngIf="activeTab === 'PAGOS'">
+  <div class="metric-card glass tone-primary">
+    <span class="metric-icon">💰</span>
+    <div>
+      <p class="metric-label">Total Recaudado</p>
+      <strong class="metric-value">S/ {{ totalRecaudado.toFixed(2) }}</strong>
+    </div>
+  </div>
+  <div class="metric-card glass tone-success">
+    <span class="metric-icon">✅</span>
+    <div>
+      <p class="metric-label">Pagos Confirmados</p>
+      <strong class="metric-value">{{ pagos.length }}</strong>
+    </div>
+  </div>
+  <div class="metric-card glass tone-accent">
+    <span class="metric-icon">📱</span>
+    <div>
+      <p class="metric-label">Yape / Plin</p>
+      <strong class="metric-value">{{ pagosPorMetodo('Yape') }}</strong>
+    </div>
+  </div>
+  <div class="metric-card glass tone-muted">
+    <span class="metric-icon">💵</span>
+    <div>
+      <p class="metric-label">Efectivo</p>
+      <strong class="metric-value">{{ pagosPorMetodo('Efectivo') }}</strong>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--              TAB: PAGOS                    -->
+<!-- ═══════════════════════════════════════════ -->
+<ng-container *ngIf="activeTab === 'PAGOS'">
+
+  <!-- TABLA DE PAGOS -->
+  <section class="table-container glass" *ngIf="!loading && pagos.length > 0">
+    <div class="table">
+      <div class="row head">
+        <span>N° Operación</span>
+        <span>Pedido</span>
+        <span>Método</span>
+        <span>Fecha / Hora</span>
+        <span>Monto</span>
+        <span>Estado</span>
+      </div>
+
+      <div class="row" *ngFor="let pago of pagos">
+        <div class="op-code">
+          <strong>{{ pago.numeroOperacion || ('OP-' + pago.idPago) }}</strong>
+          <span class="voucher-link" *ngIf="pago.comprobanteUrl">
+            📎 Comprobante
+          </span>
+        </div>
+
+        <div>
+          <strong>{{ pago.idPedido ? ('PED-' + pago.idPedido) : '—' }}</strong>
+        </div>
+
+        <div class="metodo-cell">
+          <span class="metodo-icon">{{ getMetodoIcon(pago.metodoPago?.nombreMetodo) }}</span>
+          <span>{{ pago.metodoPago?.nombreMetodo || 'Efectivo' }}</span>
+        </div>
+
+        <span class="date">{{ pago.fechaPago ? (pago.fechaPago | date:'dd/MM/yy HH:mm') : 'Hoy' }}</span>
+
+        <strong class="monto">S/ {{ (pago.montoPago || 0).toFixed(2) }}</strong>
+
+        <span class="badge-ok">✓ Registrado</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="empty-state glass" *ngIf="!loading && pagos.length === 0">
+    <span class="empty-icon">💳</span>
+    <p>No hay pagos registrados aún. Presiona <strong>Registrar Pago</strong> para comenzar.</p>
+  </div>
+
+</ng-container>
+
+<!-- ═══════════════════════════════════════════ -->
+<!--              TAB: CRÉDITOS                 -->
+<!-- ═══════════════════════════════════════════ -->
+<ng-container *ngIf="activeTab === 'CREDITOS'">
+
+  <section class="creditos-grid" *ngIf="!loading && creditos.length > 0">
+    <article *ngFor="let credito of creditos" class="credito-card glass">
+      <div class="credito-header">
+        <div>
+          <p class="cliente-name">{{ getClienteNombre(credito) }}</p>
+          <span class="doc-sub">{{ credito.cliente?.numeroDocumento || 'S/N' }}</span>
+        </div>
+        <span class="credito-estado" [class.vencido]="credito.montoPendiente > 0">
+          {{ credito.montoPendiente > 0 ? '⚠ Pendiente' : '✓ Saldado' }}
+        </span>
+      </div>
+
+      <div class="credito-amounts">
+        <div class="amount-item">
+          <span>Total crédito</span>
+          <strong>S/ {{ credito.montoTotalCredito.toFixed(2) }}</strong>
+        </div>
+        <div class="amount-item">
+          <span>Pendiente</span>
+          <strong class="pending">S/ {{ credito.montoPendiente.toFixed(2) }}</strong>
+        </div>
+        <div class="amount-item">
+          <span>Cuotas</span>
+          <strong>{{ credito.numeroCuotas }}</strong>
+        </div>
+      </div>
+
+      <div class="progress-bar">
+        <div
+          class="progress-fill"
+          [style.width.%]="((credito.montoTotalCredito - credito.montoPendiente) / credito.montoTotalCredito) * 100">
+        </div>
+      </div>
+      <p class="progress-label">
+        Pagado: S/ {{ (credito.montoTotalCredito - credito.montoPendiente).toFixed(2) }}
+        de S/ {{ credito.montoTotalCredito.toFixed(2) }}
+      </p>
+
+      <p class="credito-fecha">
+        📅 Concedido: {{ credito.fechaConcesion || 'Sin fecha' }}
+      </p>
+    </article>
+  </section>
+
+  <div class="empty-state glass" *ngIf="!loading && creditos.length === 0">
+    <span class="empty-icon">📋</span>
+    <p>No hay créditos activos registrados en el sistema.</p>
+  </div>
+
+</ng-container>
+
+<!-- MODAL REGISTRAR PAGO -->
+<div class="modal-overlay" *ngIf="showModalNewPago">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3>💳 Registrar Nuevo Pago</h3>
+      <button type="button" class="close-btn" (click)="closeNewPagoModal()">✕</button>
+    </div>
+
+    <form [formGroup]="formPago" (ngSubmit)="savePago()">
+      <div class="modal-body">
+
+        <!-- Selector de pedido -->
+        <div class="form-group">
+          <label>
+            Pedido Asociado
+            <select formControlName="idPedido">
+              <option [value]="null">— Sin pedido vinculado —</option>
+              <option *ngFor="let p of pedidos" [value]="p.idPedido">
+                {{ getPedidoLabel(p) }}
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <!-- Método de pago -->
+        <div class="metodo-grid">
+          <button
+            *ngFor="let mp of metodosPago"
+            type="button"
+            class="metodo-btn"
+            [class.selected]="formPago.get('idMetodoPago')?.value == mp.idMetodoPago"
+            (click)="formPago.patchValue({ idMetodoPago: mp.idMetodoPago })">
+            <span>{{ getMetodoIcon(mp.nombreMetodo) }}</span>
+            <span>{{ mp.nombreMetodo }}</span>
+          </button>
+        </div>
+
+        <!-- Monto -->
+        <div class="form-row">
+          <label>
+            Monto del Pago (S/) *
+            <input type="number" step="0.01" formControlName="montoPago" placeholder="0.00">
+            <span class="error-text" *ngIf="formPago.get('montoPago')?.invalid && formPago.get('montoPago')?.touched">
+              Ingrese un monto válido.
+            </span>
+          </label>
+
+          <label>
+            N° Operación / Referencia
+            <input type="text" formControlName="numeroOperacion" placeholder="Ej. YAPE-948123">
+          </label>
+        </div>
+
+        <!-- URL de comprobante (opcional) -->
+        <label class="full-width">
+          URL de Comprobante (opcional)
+          <input type="text" formControlName="comprobanteUrl" placeholder="https://... o ruta local">
+        </label>
+
+        <!-- Vista previa del método seleccionado -->
+        <div class="pago-preview glass-inner">
+          <div class="preview-row">
+            <span>Método:</span>
+            <strong>{{ metodoSeleccionado?.nombreMetodo || '—' }}</strong>
+          </div>
+          <div class="preview-row">
+            <span>Monto a cobrar:</span>
+            <strong class="preview-monto">S/ {{ (formPago.get('montoPago')?.value || 0) | number:'1.2-2' }}</strong>
+          </div>
+          <div class="preview-row">
+            <span>Referencia:</span>
+            <strong>{{ formPago.get('numeroOperacion')?.value || 'Por confirmar' }}</strong>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" (click)="closeNewPagoModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving || formPago.invalid">
+          {{ saving ? 'Procesando...' : '✓ Confirmar Pago' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,155 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AuthService } from '../../core/auth.service';
+
+interface DemoAccount { icon: string; name: string; username: string; password: string; role: string; badge: string; description: string; }
+
+@Component({
+  standalone: true,
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.css'
+})
+export class LoginComponent implements OnInit {
+
+  private readonly fb   = inject(FormBuilder);
+  readonly authService  = inject(AuthService);
+
+  isRegisterTab  = false;
+  loading        = false;
+  errorMessage   = '';
+  successMessage = '';
+  showPassword   = false;
+  showRegisterPassword = false;
+  selectedDemoRole = '';
+  showForgotModal = false;
+  forgotSent      = false;
+  forgotEmail     = '';
+  rememberMe      = true;
+
+  readonly demoAccounts: DemoAccount[] = [
+    { icon: '👑', name: 'Administrador', username: 'admin',      password: 'Admin123!',      role: 'ADMIN',      badge: 'Control Total', description: 'Acceso completo a inventario, reportes y usuarios' },
+    { icon: '💼', name: 'Vendedor',      username: 'vendedor',   password: 'Vendedor123!',   role: 'VENDEDOR',   badge: 'Ventas',        description: 'Registra ventas y gestiona clientes' },
+    { icon: '🛵', name: 'Repartidor',    username: 'repartidor', password: 'Repartidor123!', role: 'REPARTIDOR', badge: 'Entregas',      description: 'Rutas de entrega y confirmación de pedidos' },
+    { icon: '🛒', name: 'Cliente',       username: 'cliente',    password: 'Cliente123!',    role: 'CLIENTE',    badge: 'Compras',       description: 'Explora el catálogo y realiza pedidos' }
+  ];
+
+  readonly loginForm = this.fb.nonNullable.group({
+    username: ['admin',    [Validators.required]],
+    password: ['Admin123!',[Validators.required]]
+  });
+
+  readonly registerForm = this.fb.nonNullable.group({
+    nombres:     ['', [Validators.required]],
+    apellidos:   ['', [Validators.required]],
+    username:    ['', [Validators.required, Validators.minLength(3)]],
+    email:       ['', [Validators.required, Validators.email]],
+    password:    ['', [Validators.required, Validators.minLength(6)]],
+    acceptTerms: [true, [Validators.requiredTrue]]
+  });
+
+  ngOnInit(): void {
+    const saved = localStorage.getItem('roma_remembered_user');
+    if (saved) this.loginForm.patchValue({ username: saved });
+  }
+
+  switchTab(register: boolean): void {
+    this.isRegisterTab = register;
+    this.errorMessage  = '';
+    this.successMessage = '';
+  }
+
+  applyDemo(acc: DemoAccount): void {
+    this.selectedDemoRole = acc.role;
+    this.loginForm.patchValue({ username: acc.username, password: acc.password });
+    this.successMessage = `✔ Credenciales de ${acc.name} cargadas`;
+    setTimeout(() => { this.successMessage = ''; }, 2500);
+  }
+
+  // Alias used by the HTML template
+  applyDemoAccount(acc: DemoAccount): void { this.applyDemo(acc); }
+
+  get isDemoMode(): boolean { return this.authService.isDemoMode(); }
+
+  submitLogin(): void {
+    if (this.loginForm.invalid) { this.loginForm.markAllAsTouched(); return; }
+    const { username, password } = this.loginForm.getRawValue();
+    localStorage.setItem('roma_remembered_user', username);
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.authService.login({ username, password }).subscribe({
+      next: () => {
+        this.loading = false;
+        // navigateHome uses the role stored in localStorage to pick the right route
+        this.authService.navigateHome();
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = err?.error?.message ?? 'Credenciales inválidas. Usa los perfiles demo si el servidor no está activo.';
+      }
+    });
+  }
+
+  submitRegister(): void {
+    if (this.registerForm.invalid) { this.registerForm.markAllAsTouched(); return; }
+    const { nombres, apellidos, username, email, password } = this.registerForm.getRawValue();
+    this.loading = true;
+    this.errorMessage = '';
+
+    this.authService.register({ nombres, apellidos, username, email, password }).subscribe({
+      next: () => { this.loading = false; this.authService.navigateHome(); },
+      error: (err) => {
+        this.loading = false;
+        const msg = err?.error?.message ?? err?.error ?? err?.message;
+        if (typeof msg === 'string' && msg.length > 0) {
+          this.errorMessage = msg;
+        } else if (err?.status === 0) {
+          this.errorMessage = '⚠️ No se pudo conectar al servidor. Asegúrate de que el backend (Spring Boot) esté corriendo en el puerto 8080.';
+        } else {
+          this.errorMessage = 'No se pudo completar el registro. Intenta de nuevo.';
+        }
+      }
+    });
+  }
+
+  get passwordStrength(): number {
+    const v = this.registerForm.get('password')?.value ?? '';
+    if (!v) return 0;
+    let s = 0;
+    if (v.length >= 6) s += 25;
+    if (v.length >= 8) s += 25;
+    if (/[A-Z]/.test(v) && /[a-z]/.test(v)) s += 25;
+    if (/\d/.test(v) || /\W/.test(v)) s += 25;
+    return s;
+  }
+  get strengthLabel(): string {
+    const s = this.passwordStrength;
+    if (s <= 0)  return '';
+    if (s <= 25) return 'Débil';
+    if (s <= 50) return 'Regular';
+    if (s <= 75) return 'Buena';
+    return 'Excelente';
+  }
+  get strengthColor(): string {
+    const s = this.passwordStrength;
+    if (s <= 25) return '#f43f5e';
+    if (s <= 50) return '#f59e0b';
+    if (s <= 75) return '#3b82f6';
+    return '#22c55e';
+  }
+  get passwordStrengthScore(): number { return this.passwordStrength; }
+  get passwordStrengthLabel(): string  { return this.strengthLabel; }
+  get passwordStrengthColor(): string  { return this.strengthColor; }
+
+  toggleShowPassword(): void { this.showPassword = !this.showPassword; }
+  toggleShowRegisterPassword(): void { this.showRegisterPassword = !this.showRegisterPassword; }
+
+  openForgotPassword():  void { this.showForgotModal = true;  this.forgotSent = false; this.forgotEmail = ''; }
+  closeForgotPassword(): void { this.showForgotModal = false; this.forgotSent = false; }
+  sendPasswordRecovery(): void {
+    if (!this.forgotEmail || !this.forgotEmail.includes('@')) return;
+    this.forgotSent = true;
+  }
+}

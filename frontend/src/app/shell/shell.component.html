@@ -1,0 +1,126 @@
+<div class="admin-theme">
+  <!-- Mobile Backdrop Overlay -->
+  <div
+    class="sidebar-backdrop"
+    [class.active]="isMobileMenuOpen"
+    (click)="closeMobileMenu()">
+  </div>
+
+  <div class="shell">
+    <!-- SIDEBAR: BLACK & YELLOW LUXURY DESIGN -->
+    <aside class="sidebar glass" [class.mobile-open]="isMobileMenuOpen">
+      
+      <!-- Top Brand Section -->
+      <div class="sidebar-top">
+        <div class="brand">
+          <div class="brand-mark-gold">
+            <span>R</span>
+          </div>
+          <div class="brand-info">
+            <h1 class="brand-name">Web Roma <span class="gold-text">Pedidos</span></h1>
+            <p class="brand-sub">Sistema Administrativo</p>
+          </div>
+          <button type="button" class="mobile-close-btn" (click)="closeMobileMenu()">✕</button>
+        </div>
+
+        <!-- Demo Mode / Online Status Indicator -->
+        <div class="system-status-pill" [class.demo]="isDemoMode">
+          <span class="status-indicator-dot"></span>
+          <div class="status-text-wrap">
+            <strong *ngIf="!isDemoMode">Base de Datos Conectada</strong>
+            <strong *ngIf="isDemoMode">Modo Demostración Activo</strong>
+            <small>{{ isDemoMode ? 'Datos en memoria local' : 'SQL Server • RomaDB' }}</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categorized Navigation Menu -->
+      <nav class="nav-container">
+        <div *ngFor="let section of navSections" class="nav-section">
+          <span class="section-heading">{{ section.title }}</span>
+          <div class="nav-group">
+            <a
+              *ngFor="let item of section.items"
+              [routerLink]="item.route"
+              routerLinkActive="active"
+              (click)="closeMobileMenu()"
+              class="nav-item">
+              <span class="nav-icon-box">{{ item.icon }}</span>
+              <span class="nav-label">{{ item.label }}</span>
+              <span class="nav-indicator"></span>
+            </a>
+          </div>
+        </div>
+      </nav>
+
+      <!-- Sidebar Footer -->
+      <div class="sidebar-footer">
+        <div class="user-mini-card">
+          <div class="user-avatar-gold">
+            {{ authService.getUsername().slice(0, 1).toUpperCase() }}
+          </div>
+          <div class="user-mini-info">
+            <strong class="user-name">{{ authService.getUsername() }}</strong>
+            <span class="user-role-badge">{{ authService.getRole() }}</span>
+          </div>
+        </div>
+
+        <button type="button" class="logout-btn" (click)="logout()">
+          <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="content">
+      
+      <!-- TOPBAR -->
+      <header class="topbar glass">
+        <div class="topbar-left">
+          <button type="button" class="hamburger-btn" (click)="toggleMobileMenu()" aria-label="Abrir menú">
+            <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none">
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+          </button>
+          
+          <div class="topbar-titles">
+            <span class="topbar-eyebrow">MÓDULO DE GESTIÓN EMPRESARIAL</span>
+            <h2 class="topbar-heading">Panel de Control & Ventas</h2>
+          </div>
+        </div>
+
+        <div class="topbar-right">
+          <!-- Live Time & Quick Badge -->
+          <div class="topbar-chip hide-mobile">
+            <span class="chip-dot"></span>
+            <span>Sistema Operativo 24/7</span>
+          </div>
+
+          <!-- User Profile Pill -->
+          <div class="profile-pill">
+            <div class="avatar-gold">
+              {{ authService.getUsername().slice(0, 1).toUpperCase() }}
+            </div>
+            <div class="profile-details hide-mobile">
+              <strong class="profile-name">{{ authService.getUsername() }}</strong>
+              <span class="profile-role">{{ authService.getRole() }}</span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- PAGE WRAPPER FOR ROUTED COMPONENTS -->
+      <section class="page-container glass">
+        <router-outlet></router-outlet>
+      </section>
+
+    </main>
+  </div>
+</div>

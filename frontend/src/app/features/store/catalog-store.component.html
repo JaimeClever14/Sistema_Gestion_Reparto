@@ -1,0 +1,143 @@
+<!-- ═══ BREADCRUMB ═══ -->
+<div class="breadcrumb" *ngIf="searchTerm">
+  <span class="breadcrumb-link" (click)="clearFilters()">Volver al listado</span>
+  <span class="breadcrumb-sep">›</span>
+  <span class="breadcrumb-current">Resultados para "{{ searchTerm }}"</span>
+</div>
+
+<div class="catalog-layout">
+  <!-- ═══ SIDEBAR FILTROS ═══ -->
+  <aside class="filters-sidebar">
+    <div class="filter-section">
+      <h3 class="filter-title">Categorías</h3>
+      <ul class="filter-list">
+        <li>
+          <a class="filter-link" [class.active]="!selectedCategoriaId" (click)="selectCategoria(null)">
+            Todas las categorías
+          </a>
+        </li>
+        <li *ngFor="let cat of categorias">
+          <a class="filter-link"
+             [class.active]="selectedCategoriaId === cat.idCategoria"
+             (click)="selectCategoria(cat.idCategoria!)">
+            {{ cat.nombreCategoria }}
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="filter-section">
+      <h3 class="filter-title">Precio</h3>
+      <div class="price-range">
+        <input type="number" [(ngModel)]="priceMin" placeholder="Mínimo" class="price-input">
+        <span class="price-dash">—</span>
+        <input type="number" [(ngModel)]="priceMax" placeholder="Máximo" class="price-input">
+      </div>
+      <div class="price-shortcuts">
+        <button type="button" class="price-tag" (click)="priceMin = 0; priceMax = 30">Hasta S/ 30</button>
+        <button type="button" class="price-tag" (click)="priceMin = 30; priceMax = 70">S/ 30 a S/ 70</button>
+        <button type="button" class="price-tag" (click)="priceMin = 70; priceMax = 150">S/ 70 a S/ 150</button>
+        <button type="button" class="price-tag" (click)="priceMin = 150; priceMax = null">Más de S/ 150</button>
+      </div>
+    </div>
+
+    <div class="filter-section">
+      <h3 class="filter-title">Envío</h3>
+      <label class="filter-checkbox">
+        <span class="check-icon">🚚</span>
+        Envío gratis
+      </label>
+    </div>
+
+    <button type="button" class="clear-filters-btn" (click)="clearFilters()">
+      Limpiar filtros
+    </button>
+  </aside>
+
+  <!-- ═══ GRID DE PRODUCTOS ═══ -->
+  <div class="products-area">
+    <!-- Header de resultados -->
+    <div class="results-header">
+      <div class="results-info">
+        <h2 *ngIf="searchTerm">{{ productosFiltrados.length }} resultados para "{{ searchTerm }}"</h2>
+        <h2 *ngIf="!searchTerm">Catálogo de productos</h2>
+        <span class="results-count">{{ productosFiltrados.length }} productos encontrados</span>
+      </div>
+      <div class="sort-area">
+        <span class="sort-label">Ordenar por:</span>
+        <select [(ngModel)]="sortBy" class="sort-select">
+          <option value="relevancia">Más relevantes</option>
+          <option value="precio-asc">Menor precio</option>
+          <option value="precio-desc">Mayor precio</option>
+          <option value="nombre">Nombre A-Z</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Loading skeleton -->
+    <div class="products-grid" *ngIf="loading">
+      <div class="product-card skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+        <div class="skeleton-img"></div>
+        <div class="skeleton-text"></div>
+        <div class="skeleton-text short"></div>
+        <div class="skeleton-text tiny"></div>
+      </div>
+    </div>
+
+    <!-- Products grid -->
+    <div class="products-grid" *ngIf="!loading && productosFiltrados.length > 0">
+      <article *ngFor="let prod of productosFiltrados" class="product-card" id="product-{{prod.idProducto}}">
+        <!-- Imagen placeholder -->
+        <div class="product-image">
+          <div class="img-placeholder">
+            <span class="img-icon">🍾</span>
+          </div>
+          <div class="product-badges">
+            <span class="badge-discount" *ngIf="prod.precioVenta > 40">{{ getDiscountPercent() }}% OFF</span>
+            <span class="badge-shipping">Envío gratis</span>
+          </div>
+        </div>
+
+        <!-- Info del producto -->
+        <div class="product-info">
+          <p class="product-name">{{ prod.nombre }}</p>
+
+          <div class="price-block">
+            <span class="price-original" *ngIf="prod.precioVenta > 40">
+              S/ {{ (prod.precioVenta * 1.2).toFixed(2) }}
+            </span>
+            <span class="price-current">S/ {{ prod.precioVenta.toFixed(2) }}</span>
+          </div>
+
+          <p class="price-cuotas">{{ getCuotas(prod.precioVenta) }}</p>
+
+          <div class="shipping-info">
+            <span class="shipping-free">🚚 Envío gratis</span>
+          </div>
+
+          <div class="stock-info" *ngIf="isLowStock(prod)">
+            <span class="stock-low">¡Últimas {{ prod.stock }} unidades!</span>
+          </div>
+          <div class="stock-info" *ngIf="!hasStock(prod)">
+            <span class="stock-out">Sin stock</span>
+          </div>
+
+          <p class="product-seller">por <strong>RomaStore</strong></p>
+          <div class="product-actions">
+            <button class="btn-primary-meli btn-add-cart" (click)="addToCart(prod)" [disabled]="!hasStock(prod)">
+              Agregar al carrito
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" *ngIf="!loading && productosFiltrados.length === 0">
+      <div class="empty-icon">🔍</div>
+      <h3>No encontramos productos</h3>
+      <p>Intenta buscar con otros términos o revisa los filtros aplicados.</p>
+      <button type="button" class="clear-filters-btn" (click)="clearFilters()">Limpiar filtros</button>
+    </div>
+  </div>
+</div>

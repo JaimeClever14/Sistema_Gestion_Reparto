@@ -1,0 +1,246 @@
+<div class="vp-root">
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <header class="vp-header">
+    <div class="vp-header-inner">
+      <div class="vp-brand">
+        <div class="vp-logo-icon">💼</div>
+        <div>
+          <h1 class="vp-title">RomaPedidos</h1>
+          <span class="vp-sub">Panel Comercial — Vendedor</span>
+        </div>
+      </div>
+      <div class="vp-user-pill">
+        <div class="vp-avatar">{{ (auth.getUsername() || 'V')[0].toUpperCase() }}</div>
+        <div class="vp-user-meta">
+          <strong>{{ auth.getUsername() }}</strong>
+          <span class="vp-role-tag">💼 VENDEDOR</span>
+        </div>
+        <button class="vp-logout" (click)="logout()">🚪 Salir</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════════════ KPI STRIP ══════════════ -->
+  <section class="vp-kpi-row">
+    <div class="vp-kpi-card">
+      <span class="kpi-ico">🛍️</span>
+      <div><p class="kpi-label">Pedidos Emitidos</p><h3 class="kpi-num">{{ kpiPedidos }}</h3></div>
+    </div>
+    <div class="vp-kpi-card gold">
+      <span class="kpi-ico">💰</span>
+      <div><p class="kpi-label">Ventas Totales</p><h3 class="kpi-num">S/ {{ kpiMonto | number:'1.2-2' }}</h3></div>
+    </div>
+    <div class="vp-kpi-card">
+      <span class="kpi-ico">🍾</span>
+      <div><p class="kpi-label">Productos</p><h3 class="kpi-num">{{ productos.length }}</h3></div>
+    </div>
+    <div class="vp-kpi-card">
+      <span class="kpi-ico">👥</span>
+      <div><p class="kpi-label">Clientes</p><h3 class="kpi-num">{{ clientes.length }}</h3></div>
+    </div>
+  </section>
+
+  <!-- ══════════════ TABS ══════════════ -->
+  <nav class="vp-nav">
+    <button class="vp-tab" [class.active]="activeTab==='nueva-venta'" (click)="activeTab='nueva-venta'">🛒 Nueva Venta</button>
+    <button class="vp-tab" [class.active]="activeTab==='pedidos'"     (click)="activeTab='pedidos'">📋 Pedidos</button>
+    <button class="vp-tab" [class.active]="activeTab==='clientes'"    (click)="activeTab='clientes'">👥 Clientes</button>
+    <button class="vp-tab" [class.active]="activeTab==='catalogo'"    (click)="activeTab='catalogo'">🍾 Catálogo</button>
+  </nav>
+
+  <!-- ══════════════ CONTENT ══════════════ -->
+  <main class="vp-main">
+
+    <!-- TOAST -->
+    <div class="vp-toast ok" *ngIf="toastOk">{{ toastOk }}</div>
+    <div class="vp-toast err" *ngIf="toastErr">{{ toastErr }}</div>
+
+    <!-- ─── TAB: NUEVA VENTA ──────────────────────────── -->
+    <div *ngIf="activeTab==='nueva-venta'" class="vp-section">
+      <div class="sec-header">
+        <h2>🛒 Registrar Nueva Venta</h2>
+        <p>Selecciona un cliente, agrega productos y confirma el pedido.</p>
+      </div>
+
+      <div class="vp-sale-grid">
+
+        <!-- Columna izquierda: cliente -->
+        <div class="vcard">
+          <h3 class="vcard-title">👤 Cliente</h3>
+          <div class="form-grp">
+            <label>Seleccionar cliente *</label>
+            <select [(ngModel)]="selectedClienteId" class="vp-sel">
+              <option [ngValue]="null" disabled>— Elige un cliente —</option>
+              <option *ngFor="let c of clientes" [ngValue]="c.idCliente">
+                {{ nombre(c) }} | {{ c.numeroDocumento }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Info rápida del cliente -->
+          <ng-container *ngFor="let c of clientes">
+            <div class="cliente-quick" *ngIf="c.idCliente === selectedClienteId">
+              <p *ngIf="c.telefono">📞 {{ c.telefono }}</p>
+              <p *ngIf="c.email">✉️ {{ c.email }}</p>
+              <p *ngIf="c.direccionPrincipal">📍 {{ c.direccionPrincipal }}</p>
+              <p *ngIf="c.limiteCredito">💳 Crédito: <span class="gold-txt">S/ {{ c.limiteCredito | number:'1.2-2' }}</span></p>
+            </div>
+          </ng-container>
+
+          <div class="form-grp mt-8">
+            <label>Dirección de entrega</label>
+            
+            <!-- Select if addresses exist -->
+            <select *ngIf="direccionesCliente.length > 0" [(ngModel)]="selectedDireccionId" (change)="onDireccionChange()" class="vp-sel">
+              <option [ngValue]="null">Otras opciones / Escribir manualmente...</option>
+              <option *ngFor="let dir of direccionesCliente" [ngValue]="dir.idDireccion">
+                📍 {{ dir.direccion }} {{ dir.distrito ? (' - ' + dir.distrito) : '' }}
+              </option>
+            </select>
+            
+            <!-- Manual input -->
+            <input type="text" [(ngModel)]="direccionEntrega" placeholder="Dirección de envío..." class="vp-inp" [style.marginTop.px]="direccionesCliente.length > 0 ? 8 : 0">
+          </div>
+          <div class="form-grp">
+            <label>Observaciones</label>
+            <textarea [(ngModel)]="observaciones" rows="2" placeholder="Ej: Pagar contraentrega, tocar timbre..." class="vp-inp"></textarea>
+          </div>
+        </div>
+
+        <!-- Columna derecha: productos + carrito -->
+        <div class="vcard-col">
+          <!-- Selector producto -->
+          <div class="vcard">
+            <h3 class="vcard-title">🍾 Agregar Producto</h3>
+            <div class="item-add-row">
+              <select [(ngModel)]="selectedProductoId" class="vp-sel flex-g">
+                <option [ngValue]="null" disabled>— Seleccionar producto —</option>
+                <option *ngFor="let p of productos" [ngValue]="p.idProducto">
+                  {{ p.nombre }} · S/ {{ p.precioVenta | number:'1.2-2' }} (stock: {{ p.stock }})
+                </option>
+              </select>
+              <input type="number" [(ngModel)]="itemCantidad" min="1" class="vp-inp qty">
+              <button class="btn-add-item" (click)="addToCart()" [disabled]="!selectedProductoId">+ Añadir</button>
+            </div>
+          </div>
+
+          <!-- Carrito -->
+          <div class="vcard mt-10" *ngIf="cart.length > 0">
+            <h3 class="vcard-title">🛒 Detalle del Pedido</h3>
+            <div class="cart-grid">
+              <div class="cart-head-row">
+                <span>Producto</span><span>Cant.</span><span>P.Unit</span><span>Subtotal</span><span></span>
+              </div>
+              <div class="cart-item-row" *ngFor="let item of cart; let i = index">
+                <span class="prod-nm">{{ item.producto.nombre }}</span>
+                <span>{{ item.cantidad }}</span>
+                <span>S/ {{ item.precioUnitario | number:'1.2-2' }}</span>
+                <strong class="gold-txt">S/ {{ item.subtotal | number:'1.2-2' }}</strong>
+                <button class="btn-rm" (click)="removeFromCart(i)">✕</button>
+              </div>
+            </div>
+            <div class="cart-tots">
+              <div class="tot-ln"><span>Subtotal:</span><span>S/ {{ subtotal | number:'1.2-2' }}</span></div>
+              <div class="tot-ln"><span>IGV (18%):</span><span>S/ {{ igv | number:'1.2-2' }}</span></div>
+              <div class="tot-ln total-ln"><span>TOTAL:</span><strong class="gold-txt big">S/ {{ total | number:'1.2-2' }}</strong></div>
+            </div>
+            <button class="btn-confirm" [disabled]="!selectedClienteId || cart.length===0 || saving" (click)="confirmarVenta()">
+              {{ saving ? '⏳ Procesando...' : '🚀 Confirmar Venta' }}
+            </button>
+          </div>
+
+          <!-- Carrito vacío -->
+          <div class="vcard mt-10 empty-cart" *ngIf="cart.length===0">
+            <span>🛒</span>
+            <p>El carrito está vacío.<br>Selecciona un producto y agrégalo arriba.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TAB: PEDIDOS ──────────────────────────────── -->
+    <div *ngIf="activeTab==='pedidos'" class="vp-section">
+      <div class="sec-header">
+        <h2>📋 Pedidos Emitidos</h2>
+        <p>Historial de ventas generadas.</p>
+      </div>
+      <div class="vp-search">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="pedidoQ" placeholder="Buscar por código o cliente...">
+      </div>
+      <div class="vcard" *ngIf="pedidosF.length > 0">
+        <div class="tbl-head"><span>Código</span><span>Cliente</span><span>Fecha</span><span>Total</span><span>Estado</span></div>
+        <div class="tbl-row" *ngFor="let p of pedidosF">
+          <span class="code-tag">{{ p.codigoPedido || '#' + p.idPedido }}</span>
+          <span>{{ nombre(p.cliente) }}</span>
+          <span class="muted-txt">{{ p.fechaPedido | date:'dd/MM/yy HH:mm' }}</span>
+          <strong class="gold-txt">S/ {{ p.montoTotal | number:'1.2-2' }}</strong>
+          <span class="estado-pill" [ngClass]="badgeClass(p.estado)">{{ badgeEstado(p.estado) }}</span>
+        </div>
+      </div>
+      <div class="empty-state vcard" *ngIf="pedidosF.length===0">
+        <span>📋</span><p>No hay pedidos registrados aún.</p>
+      </div>
+    </div>
+
+    <!-- ─── TAB: CLIENTES ─────────────────────────────── -->
+    <div *ngIf="activeTab==='clientes'" class="vp-section">
+      <div class="sec-header">
+        <h2>👥 Directorio de Clientes</h2>
+        <p>Consulta y selecciona clientes para una venta rápida.</p>
+      </div>
+      <div class="vp-search">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="clienteQ" placeholder="Buscar por nombre o documento...">
+      </div>
+      <div class="client-grid">
+        <div class="client-card" *ngFor="let c of clientesF">
+          <div class="c-avatar">{{ (nombre(c))[0].toUpperCase() }}</div>
+          <div class="c-body">
+            <h4>{{ nombre(c) }}</h4>
+            <p>📄 {{ c.numeroDocumento || '—' }}</p>
+            <p *ngIf="c.telefono">📞 {{ c.telefono }}</p>
+            <p *ngIf="c.email">✉️ {{ c.email }}</p>
+            <p *ngIf="c.direccionPrincipal">📍 {{ c.direccionPrincipal }}</p>
+            <p *ngIf="c.limiteCredito">💳 Crédito: <strong class="gold-txt">S/ {{ c.limiteCredito | number:'1.2-2' }}</strong></p>
+          </div>
+          <button class="btn-venderle" (click)="seleccionarCliente(c.idCliente)">🛒 Venderle</button>
+        </div>
+      </div>
+      <div class="empty-state vcard" *ngIf="clientesF.length===0">
+        <span>👥</span><p>No se encontraron clientes.</p>
+      </div>
+    </div>
+
+    <!-- ─── TAB: CATÁLOGO ─────────────────────────────── -->
+    <div *ngIf="activeTab==='catalogo'" class="vp-section">
+      <div class="sec-header">
+        <h2>🍾 Catálogo de Licores</h2>
+        <p>Precios y disponibilidad en tiempo real.</p>
+      </div>
+      <div class="vp-search">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="productoQ" placeholder="Buscar producto...">
+      </div>
+      <div class="prod-grid">
+        <div class="prod-card" *ngFor="let p of productosF">
+          <div class="prod-icon-big">🍾</div>
+          <div class="prod-body">
+            <h4>{{ p.nombre }}</h4>
+            <p class="prod-desc" *ngIf="p.descripcion">{{ p.descripcion }}</p>
+            <div class="prod-meta-row">
+              <span class="prod-price gold-txt">S/ {{ p.precioVenta | number:'1.2-2' }}</span>
+              <span class="prod-stock" [class.low]="p.stock <= (p.stockMinimo ?? 5)">📦 {{ p.stock }} en stock</span>
+            </div>
+          </div>
+          <button class="btn-add-prod" (click)="seleccionarProducto(p.idProducto)">+ Añadir al pedido</button>
+        </div>
+      </div>
+      <div class="empty-state vcard" *ngIf="productosF.length===0">
+        <span>🍾</span><p>No hay productos en catálogo.</p>
+      </div>
+    </div>
+
+  </main>
+</div>

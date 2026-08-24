@@ -1,0 +1,172 @@
+<section class="grid-head">
+  <div>
+    <p class="eyebrow">Directorio Comercial</p>
+    <h1>Gestión de Clientes</h1>
+    <p class="muted">Administra la información de clientes, documentos RUC/DNI, líneas de crédito y contacto.</p>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn-primary" (click)="openNewModal()">
+      👤 Registrar Cliente
+    </button>
+  </div>
+</section>
+
+<!-- BARRA DE BÚSQUEDA -->
+<section class="filters-bar glass">
+  <div class="search-box">
+    <span class="search-icon">🔍</span>
+    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por DNI, RUC, nombre o correo de cliente...">
+  </div>
+</section>
+
+<!-- LISTADO DE CLIENTES EN TARJETAS -->
+<section class="client-grid" *ngIf="!loading && clientesFiltrados.length > 0">
+  <article *ngFor="let cli of clientesFiltrados" class="client-card glass">
+    <div class="card-header">
+      <div class="doc-badge">
+        <span>{{ cli.idTipoDocumento === 2 ? 'RUC' : 'DNI' }}</span>
+        <strong>{{ cli.numeroDocumento || 'S/N' }}</strong>
+      </div>
+      <span class="credit-pill">Límite: S/ {{ (cli.limiteCredito || 0).toFixed(2) }}</span>
+    </div>
+
+    <h3>{{ getClienteNombre(cli) }}</h3>
+
+    <div class="contact-info">
+      <p *ngIf="cli.telefono">📞 {{ cli.telefono }}</p>
+      <p *ngIf="cli.email">✉️ {{ cli.email }}</p>
+      <p *ngIf="cli.direccionPrincipal">📍 {{ cli.direccionPrincipal }}</p>
+    </div>
+
+        <button type="button" class="btn-icon" (click)="openEditModal(cli)" title="Editar">
+          ✏️
+        </button>
+        <button type="button" class="btn-action delete" (click)="deleteCliente(cli)" title="Eliminar">
+          🗑️
+        </button>
+  </article>
+</section>
+
+<div class="empty-state glass" *ngIf="!loading && clientesFiltrados.length === 0">
+  <p>No se encontraron clientes registrados.</p>
+</div>
+
+<!-- MODAL REGISTRO / EDICIÓN CLIENTE -->
+<div class="modal-overlay" *ngIf="showModal">
+  <div class="modal-card glass">
+    <div class="modal-header">
+      <h3>{{ editingCliente ? '✏️ Editar Cliente' : '👤 Registrar Nuevo Cliente' }}</h3>
+      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+    </div>
+
+    <form [formGroup]="form" (ngSubmit)="saveCliente()">
+      <div class="form-row">
+        <label>
+          Tipo de Documento
+          <select formControlName="idTipoDocumento">
+            <option *ngFor="let td of tiposDocumento" [value]="td.idTipoDocumento">
+              {{ td.nombreTipoDocumento }}
+            </option>
+          </select>
+        </label>
+
+        <label>
+          Número de Documento *
+          <input type="text" formControlName="numeroDocumento" placeholder="Ej. 20601234567 o DNI">
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Nombres / Razón Social *
+          <input type="text" formControlName="nombresRazonSocial" placeholder="Ej. Inversiones SAC o Juan Carlos">
+        </label>
+
+        <label>
+          Apellidos (si aplica)
+          <input type="text" formControlName="apellidos" placeholder="Ej. Mendoza">
+        </label>
+      </div>
+
+      <div class="form-row">
+        <label>
+          Teléfono / Celular
+          <input type="text" formControlName="telefono" placeholder="Ej. 987654321">
+        </label>
+
+        <label>
+          Correo electrónico
+          <input type="email" formControlName="email" placeholder="cliente@correo.com">
+        </label>
+      </div>
+
+      <label>
+        Dirección Principal
+        <input type="text" formControlName="direccionPrincipal" placeholder="Av. Principal 123, Distrito">
+      </label>
+
+      <label>
+        Límite de Crédito (S/)
+        <input type="number" step="100" formControlName="limiteCredito">
+      </label>
+      
+      <hr class="divider">
+      <h4>📍 Direcciones de Entrega</h4>
+      
+      <!-- Temp list -->
+      <div class="cart-table" *ngIf="tempDirecciones.length > 0">
+        <div class="cart-row head">
+          <span>Dirección</span>
+          <span>Distrito</span>
+          <span>Referencia</span>
+          <span></span>
+        </div>
+        <div class="cart-row" *ngFor="let dir of tempDirecciones; let i = index">
+          <span>
+            {{ dir.direccion }}
+            <span class="badge-status" *ngIf="dir.predeterminada" style="margin-left: 0.5rem; font-size: 0.6rem;">P</span>
+          </span>
+          <span>{{ dir.distrito || '-' }}</span>
+          <span>{{ dir.referencia || '-' }}</span>
+          <button type="button" class="btn-remove" (click)="removeTempDireccion(i)">✕</button>
+        </div>
+      </div>
+      
+      <div class="empty-state glass" *ngIf="tempDirecciones.length === 0" style="padding: 1rem; margin-bottom: 1rem;">
+        <p>No se han agregado direcciones aún.</p>
+      </div>
+
+      <!-- Add inline -->
+      <div [formGroup]="formDir" class="form-row" style="align-items: flex-end;">
+        <label style="flex: 2;">
+          Nueva Dirección
+          <input type="text" formControlName="direccion" placeholder="Ej. Av. Siempre Viva 123">
+        </label>
+        <label style="flex: 1;">
+          Distrito
+          <input type="text" formControlName="distrito" placeholder="Miraflores">
+        </label>
+        <button type="button" class="btn-secondary" (click)="addTempDireccion()" style="height: 42px;">+ Agregar</button>
+      </div>
+      <div [formGroup]="formDir" class="form-row">
+        <label style="flex: 1;">
+          Referencia
+          <input type="text" formControlName="referencia" placeholder="Frente al parque...">
+        </label>
+        <label style="flex-direction: row; align-items: center; gap: 0.5rem; cursor: pointer; flex: 1; padding-top: 1rem;">
+          <input type="checkbox" formControlName="predeterminada">
+          Es predeterminada
+        </label>
+      </div>
+
+      <div class="modal-footer" style="margin-top: 2rem;">
+        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="saving">
+          {{ saving ? 'Guardando...' : (editingCliente ? 'Actualizar' : 'Guardar') }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
