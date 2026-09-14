@@ -1,246 +1,418 @@
 <div class="vp-root">
-
-  <!-- ══════════════ HEADER ══════════════ -->
+  <!-- ENCABEZADO VENDEDOR — AMARILLO ROMASTORE -->
   <header class="vp-header">
     <div class="vp-header-inner">
-      <div class="vp-brand">
-        <div class="vp-logo-icon">💼</div>
+      <div class="vp-brand" style="display: flex; align-items: center; gap: 10px;">
+        <img src="assets/logo.png" alt="Licorería Roma Logo" style="width: 42px; height: 42px; border-radius: 50%; border: 2px solid #0f172a; object-fit: cover;">
         <div>
-          <h1 class="vp-title">RomaPedidos</h1>
-          <span class="vp-sub">Panel Comercial — Vendedor</span>
+          <h1 class="vp-title">Licorería Roma — Panel del Vendedor</h1>
+          <span class="vp-sub">⭐ Pichari Vraem — Gestión de Ventas &amp; POS</span>
         </div>
       </div>
+
       <div class="vp-user-pill">
         <div class="vp-avatar">{{ (auth.getUsername() || 'V')[0].toUpperCase() }}</div>
         <div class="vp-user-meta">
           <strong>{{ auth.getUsername() }}</strong>
-          <span class="vp-role-tag">💼 VENDEDOR</span>
+          <span class="vp-role-tag">🛒 VENDEDOR</span>
         </div>
-        <button class="vp-logout" (click)="logout()">🚪 Salir</button>
+        <button type="button" class="vp-logout" (click)="logout()" title="Cerrar sesión">🚪 Salir</button>
       </div>
     </div>
   </header>
 
-  <!-- ══════════════ KPI STRIP ══════════════ -->
-  <section class="vp-kpi-row">
-    <div class="vp-kpi-card">
-      <span class="kpi-ico">🛍️</span>
-      <div><p class="kpi-label">Pedidos Emitidos</p><h3 class="kpi-num">{{ kpiPedidos }}</h3></div>
-    </div>
-    <div class="vp-kpi-card gold">
-      <span class="kpi-ico">💰</span>
-      <div><p class="kpi-label">Ventas Totales</p><h3 class="kpi-num">S/ {{ kpiMonto | number:'1.2-2' }}</h3></div>
-    </div>
-    <div class="vp-kpi-card">
-      <span class="kpi-ico">🍾</span>
-      <div><p class="kpi-label">Productos</p><h3 class="kpi-num">{{ productos.length }}</h3></div>
-    </div>
-    <div class="vp-kpi-card">
-      <span class="kpi-ico">👥</span>
-      <div><p class="kpi-label">Clientes</p><h3 class="kpi-num">{{ clientes.length }}</h3></div>
-    </div>
-  </section>
+  <!-- ALERTAS TOAST -->
+  <div class="vp-main-wrapper">
+    <div class="vp-toast ok" *ngIf="toastOk"><span>{{ toastOk }}</span></div>
+    <div class="vp-toast err" *ngIf="toastErr"><span>{{ toastErr }}</span></div>
 
-  <!-- ══════════════ TABS ══════════════ -->
-  <nav class="vp-nav">
-    <button class="vp-tab" [class.active]="activeTab==='nueva-venta'" (click)="activeTab='nueva-venta'">🛒 Nueva Venta</button>
-    <button class="vp-tab" [class.active]="activeTab==='pedidos'"     (click)="activeTab='pedidos'">📋 Pedidos</button>
-    <button class="vp-tab" [class.active]="activeTab==='clientes'"    (click)="activeTab='clientes'">👥 Clientes</button>
-    <button class="vp-tab" [class.active]="activeTab==='catalogo'"    (click)="activeTab='catalogo'">🍾 Catálogo</button>
-  </nav>
-
-  <!-- ══════════════ CONTENT ══════════════ -->
-  <main class="vp-main">
-
-    <!-- TOAST -->
-    <div class="vp-toast ok" *ngIf="toastOk">{{ toastOk }}</div>
-    <div class="vp-toast err" *ngIf="toastErr">{{ toastErr }}</div>
-
-    <!-- ─── TAB: NUEVA VENTA ──────────────────────────── -->
-    <div *ngIf="activeTab==='nueva-venta'" class="vp-section">
-      <div class="sec-header">
-        <h2>🛒 Registrar Nueva Venta</h2>
-        <p>Selecciona un cliente, agrega productos y confirma el pedido.</p>
+    <!-- TARJETAS DE MÉTRICAS KPI -->
+    <div class="vp-kpi-row">
+      <div class="vp-kpi-card">
+        <span class="kpi-ico">📋</span>
+        <div>
+          <span class="kpi-label">Ventas Hoy</span>
+          <div class="kpi-num">{{ kpiPedidos }}</div>
+          <small class="muted-txt">pedidos emitidos</small>
+        </div>
       </div>
+      <div class="vp-kpi-card gold">
+        <span class="kpi-ico">💰</span>
+        <div>
+          <span class="kpi-label">Monto Recaudado</span>
+          <div class="kpi-num">S/ {{ kpiMonto | number:'1.2-2' }}</div>
+          <small class="muted-txt">recaudo acumulado</small>
+        </div>
+      </div>
+      <div class="vp-kpi-card">
+        <span class="kpi-ico">👥</span>
+        <div>
+          <span class="kpi-label">Directorio Clientes</span>
+          <div class="kpi-num">{{ clientes.length }}</div>
+          <small class="muted-txt">clientes activos</small>
+        </div>
+      </div>
+      <div class="vp-kpi-card">
+        <span class="kpi-ico">🍷</span>
+        <div>
+          <span class="kpi-label">Licores Catálogo</span>
+          <div class="kpi-num">{{ productos.length }}</div>
+          <small class="muted-txt">en inventario</small>
+        </div>
+      </div>
+    </div>
 
-      <div class="vp-sale-grid">
+    <!-- NAVEGACIÓN POR PESTAÑAS (TABS PILLS) -->
+    <nav class="vp-nav">
+      <button type="button" class="vp-tab" [class.active]="activeTab==='nueva-venta'" (click)="activeTab='nueva-venta'">🛒 Nueva Venta (POS)</button>
+      <button type="button" class="vp-tab" [class.active]="activeTab==='pedidos'" (click)="activeTab='pedidos'">📋 Pedidos ({{ kpiPedidos }})</button>
+      <button type="button" class="vp-tab" [class.active]="activeTab==='clientes'" (click)="activeTab='clientes'">👥 Directorio Clientes ({{ clientes.length }})</button>
+      <button type="button" class="vp-tab" [class.active]="activeTab==='catalogo'" (click)="activeTab='catalogo'">🍷 Catálogo Licores</button>
+    </nav>
 
-        <!-- Columna izquierda: cliente -->
-        <div class="vcard">
-          <h3 class="vcard-title">👤 Cliente</h3>
-          <div class="form-grp">
-            <label>Seleccionar cliente *</label>
-            <select [(ngModel)]="selectedClienteId" class="vp-sel">
-              <option [ngValue]="null" disabled>— Elige un cliente —</option>
-              <option *ngFor="let c of clientes" [ngValue]="c.idCliente">
-                {{ nombre(c) }} | {{ c.numeroDocumento }}
-              </option>
-            </select>
-          </div>
+    <!-- VISTA PRINCIPAL CONTENIDO -->
+    <main class="vp-main">
 
-          <!-- Info rápida del cliente -->
-          <ng-container *ngFor="let c of clientes">
-            <div class="cliente-quick" *ngIf="c.idCliente === selectedClienteId">
-              <p *ngIf="c.telefono">📞 {{ c.telefono }}</p>
-              <p *ngIf="c.email">✉️ {{ c.email }}</p>
-              <p *ngIf="c.direccionPrincipal">📍 {{ c.direccionPrincipal }}</p>
-              <p *ngIf="c.limiteCredito">💳 Crédito: <span class="gold-txt">S/ {{ c.limiteCredito | number:'1.2-2' }}</span></p>
-            </div>
-          </ng-container>
-
-          <div class="form-grp mt-8">
-            <label>Dirección de entrega</label>
-            
-            <!-- Select if addresses exist -->
-            <select *ngIf="direccionesCliente.length > 0" [(ngModel)]="selectedDireccionId" (change)="onDireccionChange()" class="vp-sel">
-              <option [ngValue]="null">Otras opciones / Escribir manualmente...</option>
-              <option *ngFor="let dir of direccionesCliente" [ngValue]="dir.idDireccion">
-                📍 {{ dir.direccion }} {{ dir.distrito ? (' - ' + dir.distrito) : '' }}
-              </option>
-            </select>
-            
-            <!-- Manual input -->
-            <input type="text" [(ngModel)]="direccionEntrega" placeholder="Dirección de envío..." class="vp-inp" [style.marginTop.px]="direccionesCliente.length > 0 ? 8 : 0">
-          </div>
-          <div class="form-grp">
-            <label>Observaciones</label>
-            <textarea [(ngModel)]="observaciones" rows="2" placeholder="Ej: Pagar contraentrega, tocar timbre..." class="vp-inp"></textarea>
-          </div>
+      <!-- TAB 1: NUEVA VENTA POS -->
+      <div *ngIf="activeTab==='nueva-venta'" class="vp-section">
+        <div class="sec-header">
+          <h2>🛒 Terminal POS — Registro de Nueva Venta / Pedido</h2>
+          <p>Selecciona un cliente comercial, añade los licores requeridos y confirma la orden de despacho.</p>
         </div>
 
-        <!-- Columna derecha: productos + carrito -->
-        <div class="vcard-col">
-          <!-- Selector producto -->
-          <div class="vcard">
-            <h3 class="vcard-title">🍾 Agregar Producto</h3>
-            <div class="item-add-row">
-              <select [(ngModel)]="selectedProductoId" class="vp-sel flex-g">
-                <option [ngValue]="null" disabled>— Seleccionar producto —</option>
-                <option *ngFor="let p of productos" [ngValue]="p.idProducto">
-                  {{ p.nombre }} · S/ {{ p.precioVenta | number:'1.2-2' }} (stock: {{ p.stock }})
-                </option>
-              </select>
-              <input type="number" [(ngModel)]="itemCantidad" min="1" class="vp-inp qty">
-              <button class="btn-add-item" (click)="addToCart()" [disabled]="!selectedProductoId">+ Añadir</button>
+        <div class="vp-sale-grid">
+          <!-- Columna izquierda: Datos Cliente & Despacho -->
+          <div class="vcard-col">
+            <div class="vcard">
+              <h3 class="vcard-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>👤 Cliente Comercial</span>
+                <button type="button" (click)="openModalNewCliente()" class="btn-add-item" style="padding: 4px 10px; font-size: 11px;" title="Registrar nuevo cliente">+ Nuevo Cliente</button>
+              </h3>
+
+              <!-- SI YA SE SELECCIONÓ UN CLIENTE -->
+              <div *ngIf="selectedClienteObj" class="selected-client-badge">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="c-avatar-thumb">
+                      {{ (nombre(selectedClienteObj))[0].toUpperCase() }}
+                    </div>
+                    <div>
+                      <strong style="font-size: 0.95rem; color: #1e293b; display: block;">{{ nombre(selectedClienteObj) }}</strong>
+                      <small style="color: #64748b; font-size: 0.78rem;">
+                        📄 Doc: {{ selectedClienteObj.numeroDocumento || 'S/N' }}
+                        <span *ngIf="selectedClienteObj.telefono"> | 📱 {{ selectedClienteObj.telefono }}</span>
+                      </small>
+                    </div>
+                  </div>
+                  <button type="button" (click)="clearSelectedCliente()" title="Cambiar cliente" class="btn-change-client">
+                    ✕ Cambiar
+                  </button>
+                </div>
+              </div>
+
+              <!-- BUSCADOR DE CLIENTES (CUANDO AÚN NO SE SELECCIONÓ O DESEA CAMBIAR) -->
+              <div *ngIf="!selectedClienteObj">
+                <!-- Barrita de búsqueda -->
+                <div class="pos-search-box">
+                  <span style="font-size: 1.1rem; color: #3483fa;">🔍</span>
+                  <input type="text" [(ngModel)]="posClienteSearchQuery" placeholder="Escribe para buscar por nombre, RUC, DNI o teléfono..." class="vp-inp-search" autocomplete="off">
+                  <button type="button" *ngIf="posClienteSearchQuery" (click)="posClienteSearchQuery=''" class="btn-clear-q">✕</button>
+                </div>
+
+                <!-- Lista interactiva de clientes filtrados -->
+                <div class="pos-client-results">
+                  <div *ngFor="let c of posClientesFiltrados" (click)="selectClientePos(c)" class="pos-client-item">
+                    <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                      <div class="c-avatar-mini">
+                        {{ (nombre(c))[0].toUpperCase() }}
+                      </div>
+                      <div style="min-width: 0;">
+                        <div style="font-weight: 700; font-size: 0.85rem; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ nombre(c) }}</div>
+                        <small style="color: #64748b; font-size: 0.74rem;">Doc: {{ c.numeroDocumento || 'S/N' }} {{ c.telefono ? (' | ' + c.telefono) : '' }}</small>
+                      </div>
+                    </div>
+                    <button type="button" class="btn-select-mini">Seleccionar</button>
+                  </div>
+
+                  <div *ngIf="posClientesFiltrados.length === 0" style="text-align: center; padding: 16px; color: #64748b; font-size: 0.82rem;">
+                    🔍 No se encontró cliente coincidente. Usa <strong>+ Nuevo Cliente</strong> para registrarlo.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Direcciones cliente -->
+              <div class="form-grp" *ngIf="direccionesCliente.length > 0">
+                <label style="color: #3483fa;">📍 Sucursal / Dirección Registrada</label>
+                <select [(ngModel)]="selectedDireccionId" (change)="onDireccionChange()" class="vp-sel">
+                  <option [ngValue]="null">Escribir dirección manualmente...</option>
+                  <option *ngFor="let dir of direccionesCliente" [ngValue]="dir.idDireccion">
+                    📍 {{ dir.direccion }} {{ dir.distrito ? (' - ' + dir.distrito) : '' }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-grp">
+                <label>Dirección de Despacho</label>
+                <input type="text" [(ngModel)]="direccionEntrega" placeholder="Dirección de envío o entrega..." class="vp-inp">
+              </div>
+
+              <div class="form-grp">
+                <label>Observaciones de la Venta</label>
+                <textarea [(ngModel)]="observaciones" rows="2" placeholder="Notas adicionales (Ej: Pago en efectivo contraentrega...)" class="vp-inp"></textarea>
+              </div>
             </div>
           </div>
 
-          <!-- Carrito -->
-          <div class="vcard mt-10" *ngIf="cart.length > 0">
-            <h3 class="vcard-title">🛒 Detalle del Pedido</h3>
-            <div class="cart-grid">
-              <div class="cart-head-row">
-                <span>Producto</span><span>Cant.</span><span>P.Unit</span><span>Subtotal</span><span></span>
+          <!-- Columna derecha: Agregar Productos + Resumen Carrito -->
+          <div class="vcard-col">
+            <div class="vcard">
+              <h3 class="vcard-title" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>🍷 Buscador de Licores</span>
+                <small style="font-size: 11px; font-weight: 500; color: #64748b;">{{ posProductosFiltrados.length }} licores encontrados</small>
+              </h3>
+
+              <!-- Barrita de búsqueda en tiempo real -->
+              <div class="pos-search-box">
+                <span style="font-size: 1.1rem; color: #3483fa;">🔍</span>
+                <input type="text" [(ngModel)]="posSearchQuery" placeholder="Escribe para buscar por nombre o código de barras (ej: Whisky, Cusqueña)..." class="vp-inp-search" autocomplete="off">
+                <button type="button" *ngIf="posSearchQuery" (click)="posSearchQuery=''" class="btn-clear-q">✕</button>
               </div>
-              <div class="cart-item-row" *ngFor="let item of cart; let i = index">
-                <span class="prod-nm">{{ item.producto.nombre }}</span>
-                <span>{{ item.cantidad }}</span>
-                <span>S/ {{ item.precioUnitario | number:'1.2-2' }}</span>
-                <strong class="gold-txt">S/ {{ item.subtotal | number:'1.2-2' }}</strong>
-                <button class="btn-rm" (click)="removeFromCart(i)">✕</button>
+
+              <!-- Píldoras de filtro por categoría -->
+              <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px;">
+                <button type="button" *ngFor="let cat of ['TODOS', 'Whisky', 'Vodka', 'Ron', 'Cerveza', 'Vino', 'Pisco']"
+                        (click)="selectedCatFilter = cat"
+                        class="pos-cat-pill"
+                        [class.active]="selectedCatFilter === cat">
+                  {{ cat === 'TODOS' ? '🌐 Todos' : cat }}
+                </button>
               </div>
+
+              <!-- Lista de resultados de búsqueda -->
+              <div class="pos-prod-results">
+                <div *ngFor="let p of posProductosFiltrados" class="pos-item-row">
+                  
+                  <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+                    <div class="prod-thumb-mini">
+                      <img *ngIf="p.imagenUrl" [src]="p.imagenUrl" [alt]="p.nombre">
+                      <span *ngIf="!p.imagenUrl">🍷</span>
+                    </div>
+                    <div style="min-width: 0;">
+                      <div class="prod-title-bold">{{ p.nombre }}</div>
+                      <div style="font-size: 0.75rem; color: #64748b; display: flex; gap: 8px;">
+                        <span>Cod: {{ p.codigoBarras || ('LIC-' + p.idProducto) }}</span>
+                        <span [style.color]="p.stock <= (p.stockMinimo ?? 5) ? '#ef4444' : '#16a34a'" style="font-weight: 600;">📦 {{ p.stock }} stock</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; align-items: center; gap: 10px; flex-shrink: 0;">
+                    <span class="price-highlight">S/ {{ p.precioVenta | number:'1.2-2' }}</span>
+                    <button type="button" (click)="quickAddToCart(p)" [disabled]="p.stock <= 0" class="btn-quick-add">
+                      + Añadir
+                    </button>
+                  </div>
+
+                </div>
+
+                <div *ngIf="posProductosFiltrados.length === 0" style="text-align: center; padding: 20px; color: #64748b; font-size: 0.85rem;">
+                  🔍 No se encontraron licores que coincidan con "{{ posSearchQuery }}".
+                </div>
+              </div>
+
             </div>
-            <div class="cart-tots">
-              <div class="tot-ln"><span>Subtotal:</span><span>S/ {{ subtotal | number:'1.2-2' }}</span></div>
-              <div class="tot-ln"><span>IGV (18%):</span><span>S/ {{ igv | number:'1.2-2' }}</span></div>
-              <div class="tot-ln total-ln"><span>TOTAL:</span><strong class="gold-txt big">S/ {{ total | number:'1.2-2' }}</strong></div>
+
+            <!-- Carrito con ítems -->
+            <div class="vcard mt-10" *ngIf="cart.length > 0">
+              <h3 class="vcard-title">📦 Detalle del Pedido</h3>
+              <div class="cart-grid">
+                <div class="cart-head-row">
+                  <span>Producto</span><span>Cant.</span><span>P.Unit</span><span>Subtotal</span><span></span>
+                </div>
+                <div class="cart-item-row" *ngFor="let item of cart; let i = index">
+                  <span class="prod-nm">{{ item.producto.nombre }}</span>
+                  <span>{{ item.cantidad }}</span>
+                  <span>S/ {{ item.precioUnitario | number:'1.2-2' }}</span>
+                  <strong class="gold-txt">S/ {{ item.subtotal | number:'1.2-2' }}</strong>
+                  <button type="button" class="btn-rm" (click)="removeFromCart(i)">✕</button>
+                </div>
+              </div>
+              <div class="cart-tots">
+                <div class="tot-ln"><span>Subtotal:</span><span>S/ {{ subtotal | number:'1.2-2' }}</span></div>
+                <div class="tot-ln"><span>IGV (18%):</span><span>S/ {{ igv | number:'1.2-2' }}</span></div>
+                <div class="tot-ln total-ln"><span>TOTAL:</span><strong class="gold-txt big">S/ {{ total | number:'1.2-2' }}</strong></div>
+              </div>
+              <button type="button" class="btn-confirm" [disabled]="!selectedClienteId || cart.length===0 || saving" (click)="confirmarVenta()">
+                {{ saving ? '⏳ Procesando...' : '🚀 Confirmar Venta' }}
+              </button>
             </div>
-            <button class="btn-confirm" [disabled]="!selectedClienteId || cart.length===0 || saving" (click)="confirmarVenta()">
-              {{ saving ? '⏳ Procesando...' : '🚀 Confirmar Venta' }}
+
+            <!-- Carrito vacío -->
+            <div class="vcard mt-10 empty-cart" *ngIf="cart.length===0">
+              <span>📦</span>
+              <p>El carrito de venta está vacío.<br>Selecciona un licor y haz clic en <strong>+ Añadir</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: PEDIDOS EMITIDOS -->
+      <div *ngIf="activeTab==='pedidos'" class="vp-section">
+        <div class="sec-header">
+          <h2>📋 Pedidos Emitidos</h2>
+          <p>Historial de ventas e historial de órdenes generadas.</p>
+        </div>
+        <div class="vp-search">
+          <span>🔍</span>
+          <input type="text" [(ngModel)]="pedidoQ" placeholder="Buscar por código de pedido o cliente...">
+        </div>
+        <div class="vcard" *ngIf="pedidosF.length > 0">
+          <div class="tbl-head"><span>Código</span><span>Cliente</span><span>Fecha</span><span>Total</span><span>Estado</span></div>
+          <div class="tbl-row" *ngFor="let p of pedidosF">
+            <span class="code-tag">{{ p.codigoPedido || '#' + p.idPedido }}</span>
+            <span style="font-weight: 600; color: #1e293b;">{{ nombre(p.cliente) }}</span>
+            <span class="muted-txt">{{ p.fechaPedido | date:'dd/MM/yy HH:mm' }}</span>
+            <strong class="gold-txt">S/ {{ (p.montoTotal || p.total || 0) | number:'1.2-2' }}</strong>
+            <span class="estado-pill" [ngClass]="badgeClass(p.estado)">{{ badgeEstado(p.estado) }}</span>
+          </div>
+        </div>
+        <div class="empty-state vcard" *ngIf="pedidosF.length===0">
+          <span>📋</span><p>No hay pedidos registrados en el sistema.</p>
+        </div>
+      </div>
+
+      <!-- TAB 3: DIRECTORIO DE CLIENTES -->
+      <div *ngIf="activeTab==='clientes'" class="vp-section">
+        <div class="sec-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+          <div>
+            <h2>👥 Directorio de Clientes</h2>
+            <p>Consulta y gestiona los clientes registrados para ventas comerciales.</p>
+          </div>
+          <button type="button" (click)="openModalNewCliente()" class="btn-new-client-main">
+            ➕ Registrar Nuevo Cliente
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center;">
+          <div class="vp-search" style="flex: 1; min-width: 250px; margin-bottom: 0;">
+            <span>🔍</span>
+            <input type="text" [(ngModel)]="clienteQ" placeholder="Buscar cliente por nombre, DNI/RUC, teléfono, email o dirección...">
+            <button type="button" *ngIf="clienteQ" (click)="clienteQ=''" class="btn-clear-q" style="right: 12px; position: absolute; background: none; border: none; cursor: pointer; color: #94a3b8; font-weight: bold;">✕</button>
+          </div>
+          <div style="display: flex; gap: 6px;">
+            <button type="button" *ngFor="let docType of ['TODOS', 'DNI', 'RUC']"
+                    (click)="clienteDocFilter = docType"
+                    class="pos-cat-pill"
+                    [class.active]="clienteDocFilter === docType">
+              {{ docType === 'TODOS' ? '🌐 Todos' : docType }}
             </button>
           </div>
-
-          <!-- Carrito vacío -->
-          <div class="vcard mt-10 empty-cart" *ngIf="cart.length===0">
-            <span>🛒</span>
-            <p>El carrito está vacío.<br>Selecciona un producto y agrégalo arriba.</p>
-          </div>
         </div>
-      </div>
-    </div>
 
-    <!-- ─── TAB: PEDIDOS ──────────────────────────────── -->
-    <div *ngIf="activeTab==='pedidos'" class="vp-section">
-      <div class="sec-header">
-        <h2>📋 Pedidos Emitidos</h2>
-        <p>Historial de ventas generadas.</p>
-      </div>
-      <div class="vp-search">
-        <span>🔍</span>
-        <input type="text" [(ngModel)]="pedidoQ" placeholder="Buscar por código o cliente...">
-      </div>
-      <div class="vcard" *ngIf="pedidosF.length > 0">
-        <div class="tbl-head"><span>Código</span><span>Cliente</span><span>Fecha</span><span>Total</span><span>Estado</span></div>
-        <div class="tbl-row" *ngFor="let p of pedidosF">
-          <span class="code-tag">{{ p.codigoPedido || '#' + p.idPedido }}</span>
-          <span>{{ nombre(p.cliente) }}</span>
-          <span class="muted-txt">{{ p.fechaPedido | date:'dd/MM/yy HH:mm' }}</span>
-          <strong class="gold-txt">S/ {{ p.montoTotal | number:'1.2-2' }}</strong>
-          <span class="estado-pill" [ngClass]="badgeClass(p.estado)">{{ badgeEstado(p.estado) }}</span>
-        </div>
-      </div>
-      <div class="empty-state vcard" *ngIf="pedidosF.length===0">
-        <span>📋</span><p>No hay pedidos registrados aún.</p>
-      </div>
-    </div>
-
-    <!-- ─── TAB: CLIENTES ─────────────────────────────── -->
-    <div *ngIf="activeTab==='clientes'" class="vp-section">
-      <div class="sec-header">
-        <h2>👥 Directorio de Clientes</h2>
-        <p>Consulta y selecciona clientes para una venta rápida.</p>
-      </div>
-      <div class="vp-search">
-        <span>🔍</span>
-        <input type="text" [(ngModel)]="clienteQ" placeholder="Buscar por nombre o documento...">
-      </div>
-      <div class="client-grid">
-        <div class="client-card" *ngFor="let c of clientesF">
-          <div class="c-avatar">{{ (nombre(c))[0].toUpperCase() }}</div>
-          <div class="c-body">
-            <h4>{{ nombre(c) }}</h4>
-            <p>📄 {{ c.numeroDocumento || '—' }}</p>
-            <p *ngIf="c.telefono">📞 {{ c.telefono }}</p>
-            <p *ngIf="c.email">✉️ {{ c.email }}</p>
-            <p *ngIf="c.direccionPrincipal">📍 {{ c.direccionPrincipal }}</p>
-            <p *ngIf="c.limiteCredito">💳 Crédito: <strong class="gold-txt">S/ {{ c.limiteCredito | number:'1.2-2' }}</strong></p>
-          </div>
-          <button class="btn-venderle" (click)="seleccionarCliente(c.idCliente)">🛒 Venderle</button>
-        </div>
-      </div>
-      <div class="empty-state vcard" *ngIf="clientesF.length===0">
-        <span>👥</span><p>No se encontraron clientes.</p>
-      </div>
-    </div>
-
-    <!-- ─── TAB: CATÁLOGO ─────────────────────────────── -->
-    <div *ngIf="activeTab==='catalogo'" class="vp-section">
-      <div class="sec-header">
-        <h2>🍾 Catálogo de Licores</h2>
-        <p>Precios y disponibilidad en tiempo real.</p>
-      </div>
-      <div class="vp-search">
-        <span>🔍</span>
-        <input type="text" [(ngModel)]="productoQ" placeholder="Buscar producto...">
-      </div>
-      <div class="prod-grid">
-        <div class="prod-card" *ngFor="let p of productosF">
-          <div class="prod-icon-big">🍾</div>
-          <div class="prod-body">
-            <h4>{{ p.nombre }}</h4>
-            <p class="prod-desc" *ngIf="p.descripcion">{{ p.descripcion }}</p>
-            <div class="prod-meta-row">
-              <span class="prod-price gold-txt">S/ {{ p.precioVenta | number:'1.2-2' }}</span>
-              <span class="prod-stock" [class.low]="p.stock <= (p.stockMinimo ?? 5)">📦 {{ p.stock }} en stock</span>
+        <div class="client-grid">
+          <div class="client-card" *ngFor="let c of clientesF">
+            <div class="c-avatar">{{ (nombre(c))[0].toUpperCase() }}</div>
+            <div class="c-body">
+              <h4>{{ nombre(c) }}</h4>
+              <p>📄 Doc: {{ c.numeroDocumento || 'S/N' }}</p>
+              <p *ngIf="c.telefono">📱 {{ c.telefono }}</p>
+              <p *ngIf="c.email">✉️ {{ c.email }}</p>
+              <p *ngIf="c.direccionPrincipal">📍 {{ c.direccionPrincipal }}</p>
+              <p *ngIf="c.limiteCredito">💳 Crédito: <strong class="gold-txt">S/ {{ c.limiteCredito | number:'1.2-2' }}</strong></p>
             </div>
+            <button type="button" class="btn-venderle" (click)="seleccionarCliente(c.idCliente)">🛒 Venderle</button>
           </div>
-          <button class="btn-add-prod" (click)="seleccionarProducto(p.idProducto)">+ Añadir al pedido</button>
+        </div>
+
+        <div class="empty-state vcard" *ngIf="clientesF.length===0">
+          <span>👥</span><p>No se encontraron clientes coincidentes en el directorio.</p>
         </div>
       </div>
-      <div class="empty-state vcard" *ngIf="productosF.length===0">
-        <span>🍾</span><p>No hay productos en catálogo.</p>
+
+      <!-- TAB 4: CATÁLOGO -->
+      <div *ngIf="activeTab==='catalogo'" class="vp-section">
+        <div class="sec-header">
+          <h2>🍷 Catálogo de Licores</h2>
+          <p>Disponibilidad de inventario y lista de precios oficial.</p>
+        </div>
+        <div class="vp-search">
+          <span>🔍</span>
+          <input type="text" [(ngModel)]="productoQ" placeholder="Buscar licor por nombre...">
+        </div>
+        <div class="prod-grid">
+          <div class="prod-card" *ngFor="let p of productosF">
+            <div class="prod-icon-big">
+              <img *ngIf="p.imagenUrl" [src]="p.imagenUrl" [alt]="p.nombre">
+              <span *ngIf="!p.imagenUrl" style="font-size: 3rem;">🍷</span>
+            </div>
+            <div class="prod-body">
+              <h4>{{ p.nombre }}</h4>
+              <p class="prod-desc" *ngIf="p.descripcion">{{ p.descripcion }}</p>
+              <div class="prod-meta-row">
+                <span class="prod-price gold-txt">S/ {{ p.precioVenta | number:'1.2-2' }}</span>
+                <span class="prod-stock" [class.low]="p.stock <= (p.stockMinimo ?? 5)">📦 {{ p.stock }} stock</span>
+              </div>
+            </div>
+            <button type="button" class="btn-add-prod" (click)="seleccionarProducto(p.idProducto)">+ Añadir al pedido</button>
+          </div>
+        </div>
+        <div class="empty-state vcard" *ngIf="productosF.length===0">
+          <span>🍷</span><p>No hay licores en el catálogo.</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- MODAL CREAR NUEVO CLIENTE (DESDE VENDEDOR) -->
+<div class="modal-overlay" *ngIf="showModalNewCliente" (click)="closeModalNewCliente()">
+  <div class="adminlte-modal" (click)="$event.stopPropagation()">
+    
+    <div class="modal-header">
+      <h3>➕ Registrar Nuevo Cliente Comercial</h3>
+      <button type="button" (click)="closeModalNewCliente()" class="modal-close-btn"><span>&times;</span></button>
+    </div>
+
+    <div class="modal-body">
+      <div style="margin-bottom: 12px;">
+        <label class="modal-lbl">Nombres / Razón Social *</label>
+        <input type="text" [(ngModel)]="newClienteNombre" placeholder="Ej. Distribuidora El Sol SAC" class="modal-inp">
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div style="flex: 1;">
+          <label class="modal-lbl">Número Documento (RUC/DNI) *</label>
+          <input type="text" [(ngModel)]="newClienteDoc" placeholder="20601234567" class="modal-inp">
+        </div>
+        <div style="flex: 1;">
+          <label class="modal-lbl">📱 Teléfono / WhatsApp</label>
+          <input type="text" [(ngModel)]="newClienteTel" placeholder="987654321" class="modal-inp">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+        <div style="flex: 1;">
+          <label class="modal-lbl">Correo Electrónico</label>
+          <input type="email" [(ngModel)]="newClienteEmail" placeholder="contacto@elsol.pe" class="modal-inp">
+        </div>
+        <div style="flex: 1;">
+          <label class="modal-lbl">Límite Crédito (S/)</label>
+          <input type="number" [(ngModel)]="newClienteLimite" placeholder="1000" class="modal-inp">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label class="modal-lbl">📍 Dirección Principal de Entrega</label>
+        <input type="text" [(ngModel)]="newClienteDir" placeholder="Ej. Av. Larco 456, Miraflores" class="modal-inp">
       </div>
     </div>
 
-  </main>
+    <div class="modal-footer">
+      <button type="button" (click)="closeModalNewCliente()" class="btn-cancel">Cancelar</button>
+      <button type="button" (click)="saveNuevoCliente()" class="btn-save-cli">Guardar Cliente</button>
+    </div>
+
+  </div>
 </div>
+

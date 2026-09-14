@@ -50,12 +50,23 @@ export class PromotionsComponent implements OnInit {
     });
   }
 
+  selectedTipoFilter = 'TODOS';
+
   get promocionesFiltradas(): Promocion[] {
-    if (!this.searchTerm) return this.promociones;
-    const term = this.searchTerm.toLowerCase();
-    return this.promociones.filter((p) =>
-      p.nombre.toLowerCase().includes(term) || (p.descripcion && p.descripcion.toLowerCase().includes(term))
-    );
+    return this.promociones.filter((p) => {
+      const term = (this.searchTerm || '').toLowerCase();
+      const matchSearch = !term ||
+        p.nombre.toLowerCase().includes(term) ||
+        (p.descripcion && p.descripcion.toLowerCase().includes(term));
+
+      const matchTipo = this.selectedTipoFilter === 'TODOS' ||
+        (this.selectedTipoFilter === 'PORCENTAJE' && p.tipoDescuento === 'PORCENTAJE') ||
+        (this.selectedTipoFilter === 'MONTO' && p.tipoDescuento === 'MONTO') ||
+        (this.selectedTipoFilter === 'ACTIVAS' && (p.estado === 'A' || !p.estado)) ||
+        (this.selectedTipoFilter === 'INACTIVAS' && p.estado === 'I');
+
+      return matchSearch && matchTipo;
+    });
   }
 
   openNewModal(): void {

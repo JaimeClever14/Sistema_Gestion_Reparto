@@ -58,12 +58,25 @@ export class AuthService {
     this.router.navigate([path]);
   }
 
-  // ─── LOGOUT ─────────────────────────────────────────────────────────────
   logout(): void {
-    localStorage.removeItem('roma_token');
-    localStorage.removeItem('roma_username');
-    localStorage.removeItem('roma_role');
-    this.router.navigate(['/login']);
+    try {
+      localStorage.removeItem('roma_token');
+      localStorage.removeItem('roma_username');
+      localStorage.removeItem('roma_role');
+      sessionStorage.clear();
+    } catch (e) {
+      console.error('Error clearing auth state on logout', e);
+    }
+
+    // Navegación inmediata e instántanea con Angular Router
+    this.router.navigateByUrl('/login').then(success => {
+      if (!success) {
+        window.location.href = '/login';
+      }
+    }).catch(err => {
+      console.warn('Router navigation to /login failed, fallback to location.href', err);
+      window.location.href = '/login';
+    });
   }
 
   // ─── HELPERS ────────────────────────────────────────────────────────────

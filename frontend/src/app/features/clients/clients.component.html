@@ -1,172 +1,277 @@
-<section class="grid-head">
-  <div>
-    <p class="eyebrow">Directorio Comercial</p>
-    <h1>Gestión de Clientes</h1>
-    <p class="muted">Administra la información de clientes, documentos RUC/DNI, líneas de crédito y contacto.</p>
-  </div>
+<div class="catalog-clients-container" style="padding: 15px; background-color: #f1f5f9; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-  <div class="actions">
-    <button type="button" class="btn-primary" (click)="openNewModal()">
-      👤 Registrar Cliente
+  <!-- TABS / PILLS HEADER -->
+  <div class="top-pills-nav" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button type="button" class="pill-btn active" style="background-color: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <span>👥</span> Directorio de Clientes (Catálogo)
+    </button>
+    <button type="button" class="pill-btn inactive" (click)="openNewModal()" style="background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+      <span>➕</span> Registrar Nuevo Cliente
+    </button>
+    <button type="button" class="pill-btn inactive" style="background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+      <span>💳</span> Créditos &amp; Líneas de Compra
     </button>
   </div>
-</section>
 
-<!-- BARRA DE BÚSQUEDA -->
-<section class="filters-bar glass">
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por DNI, RUC, nombre o correo de cliente...">
+  <!-- TARJETAS KPIS ESTADÍSTICAS -->
+  <div class="row mb-3" style="display: flex; gap: 15px; margin-bottom: 15px;">
+    <div class="kpi-card" style="flex: 1; background: #ffffff; border-radius: 6px; padding: 14px 18px; border-left: 4px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Clientes</span>
+      <h3 style="margin: 4px 0 0 0; color: #0f172a; font-size: 22px; font-weight: 800;">{{ totalClientesCount }}</h3>
+    </div>
+    <div class="kpi-card" style="flex: 1; background: #ffffff; border-radius: 6px; padding: 14px 18px; border-left: 4px solid #00a65a; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Empresas (RUC)</span>
+      <h3 style="margin: 4px 0 0 0; color: #00a65a; font-size: 22px; font-weight: 800;">{{ rucClientesCount }}</h3>
+    </div>
+    <div class="kpi-card" style="flex: 1; background: #ffffff; border-radius: 6px; padding: 14px 18px; border-left: 4px solid #f39c12; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Personas (DNI)</span>
+      <h3 style="margin: 4px 0 0 0; color: #f39c12; font-size: 22px; font-weight: 800;">{{ dniClientesCount }}</h3>
+    </div>
+    <div class="kpi-card" style="flex: 1; background: #ffffff; border-radius: 6px; padding: 14px 18px; border-left: 4px solid #8b5cf6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Crédito Total Otorgado</span>
+      <h3 style="margin: 4px 0 0 0; color: #8b5cf6; font-size: 22px; font-weight: 800;">S/ {{ limiteCreditoTotal.toFixed(2) }}</h3>
+    </div>
   </div>
-</section>
 
-<!-- LISTADO DE CLIENTES EN TARJETAS -->
-<section class="client-grid" *ngIf="!loading && clientesFiltrados.length > 0">
-  <article *ngFor="let cli of clientesFiltrados" class="client-card glass">
-    <div class="card-header">
-      <div class="doc-badge">
-        <span>{{ cli.idTipoDocumento === 2 ? 'RUC' : 'DNI' }}</span>
-        <strong>{{ cli.numeroDocumento || 'S/N' }}</strong>
-      </div>
-      <span class="credit-pill">Límite: S/ {{ (cli.limiteCredito || 0).toFixed(2) }}</span>
+  <!-- TARJETA PRINCIPAL (EXACTA AL DISEÑO DEL CATÁLOGO) -->
+  <div class="main-card-catalog" style="background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+    
+    <!-- HEADER TARJETA -->
+    <div class="card-top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">Directorio de Clientes Comerciales</h2>
+      <button type="button" class="btn-nuevo-prod" (click)="openNewModal()" style="background-color: #00a65a; color: white; border: none; padding: 9px 18px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        + Nuevo Cliente
+      </button>
     </div>
 
-    <h3>{{ getClienteNombre(cli) }}</h3>
+    <!-- FILTROS Y BÚSQUEDA -->
+    <div class="card-filters-section" style="padding: 16px 20px; background-color: #ffffff;">
+      <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+        
+        <!-- Búsqueda -->
+        <div style="flex: 2; min-width: 280px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">Buscar Cliente:</label>
+          <div style="display: flex; width: 100%;">
+            <input type="text" [(ngModel)]="searchTerm" placeholder="Razón social, DNI/RUC, email o dirección..." style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-right: none; border-top-left-radius: 4px; border-bottom-left-radius: 4px; font-size: 13px; outline: none; box-sizing: border-box;">
+            <button type="button" style="background-color: #46b8da; color: white; border: 1px solid #46b8da; padding: 8px 16px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🔍 Buscar
+            </button>
+          </div>
+        </div>
 
-    <div class="contact-info">
-      <p *ngIf="cli.telefono">📞 {{ cli.telefono }}</p>
-      <p *ngIf="cli.email">✉️ {{ cli.email }}</p>
-      <p *ngIf="cli.direccionPrincipal">📍 {{ cli.direccionPrincipal }}</p>
-    </div>
-
-        <button type="button" class="btn-icon" (click)="openEditModal(cli)" title="Editar">
-          ✏️
-        </button>
-        <button type="button" class="btn-action delete" (click)="deleteCliente(cli)" title="Eliminar">
-          🗑️
-        </button>
-  </article>
-</section>
-
-<div class="empty-state glass" *ngIf="!loading && clientesFiltrados.length === 0">
-  <p>No se encontraron clientes registrados.</p>
-</div>
-
-<!-- MODAL REGISTRO / EDICIÓN CLIENTE -->
-<div class="modal-overlay" *ngIf="showModal">
-  <div class="modal-card glass">
-    <div class="modal-header">
-      <h3>{{ editingCliente ? '✏️ Editar Cliente' : '👤 Registrar Nuevo Cliente' }}</h3>
-      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
-    </div>
-
-    <form [formGroup]="form" (ngSubmit)="saveCliente()">
-      <div class="form-row">
-        <label>
-          Tipo de Documento
-          <select formControlName="idTipoDocumento">
-            <option *ngFor="let td of tiposDocumento" [value]="td.idTipoDocumento">
-              {{ td.nombreTipoDocumento }}
-            </option>
+        <!-- Filtro Documento -->
+        <div style="flex: 1; min-width: 180px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">Tipo Documento:</label>
+          <select [(ngModel)]="selectedDocFilter" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; background-color: #ffffff; color: #334155; outline: none; box-sizing: border-box;">
+            <option value="TODOS">Todos los tipos</option>
+            <option value="RUC">RUC (Empresas)</option>
+            <option value="DNI">DNI (Personas)</option>
           </select>
-        </label>
-
-        <label>
-          Número de Documento *
-          <input type="text" formControlName="numeroDocumento" placeholder="Ej. 20601234567 o DNI">
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          Nombres / Razón Social *
-          <input type="text" formControlName="nombresRazonSocial" placeholder="Ej. Inversiones SAC o Juan Carlos">
-        </label>
-
-        <label>
-          Apellidos (si aplica)
-          <input type="text" formControlName="apellidos" placeholder="Ej. Mendoza">
-        </label>
-      </div>
-
-      <div class="form-row">
-        <label>
-          Teléfono / Celular
-          <input type="text" formControlName="telefono" placeholder="Ej. 987654321">
-        </label>
-
-        <label>
-          Correo electrónico
-          <input type="email" formControlName="email" placeholder="cliente@correo.com">
-        </label>
-      </div>
-
-      <label>
-        Dirección Principal
-        <input type="text" formControlName="direccionPrincipal" placeholder="Av. Principal 123, Distrito">
-      </label>
-
-      <label>
-        Límite de Crédito (S/)
-        <input type="number" step="100" formControlName="limiteCredito">
-      </label>
-      
-      <hr class="divider">
-      <h4>📍 Direcciones de Entrega</h4>
-      
-      <!-- Temp list -->
-      <div class="cart-table" *ngIf="tempDirecciones.length > 0">
-        <div class="cart-row head">
-          <span>Dirección</span>
-          <span>Distrito</span>
-          <span>Referencia</span>
-          <span></span>
         </div>
-        <div class="cart-row" *ngFor="let dir of tempDirecciones; let i = index">
-          <span>
-            {{ dir.direccion }}
-            <span class="badge-status" *ngIf="dir.predeterminada" style="margin-left: 0.5rem; font-size: 0.6rem;">P</span>
-          </span>
-          <span>{{ dir.distrito || '-' }}</span>
-          <span>{{ dir.referencia || '-' }}</span>
-          <button type="button" class="btn-remove" (click)="removeTempDireccion(i)">✕</button>
+
+        <!-- Filtro Crédito -->
+        <div style="flex: 1; min-width: 180px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">Filtrar por Crédito:</label>
+          <select [(ngModel)]="selectedCreditoFilter" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; background-color: #ffffff; color: #334155; outline: none; box-sizing: border-box;">
+            <option value="TODOS">Todos los clientes</option>
+            <option value="CON_CREDITO">Con Línea de Crédito</option>
+            <option value="ACTIVOS">Solo Activos</option>
+          </select>
         </div>
-      </div>
-      
-      <div class="empty-state glass" *ngIf="tempDirecciones.length === 0" style="padding: 1rem; margin-bottom: 1rem;">
-        <p>No se han agregado direcciones aún.</p>
-      </div>
 
-      <!-- Add inline -->
-      <div [formGroup]="formDir" class="form-row" style="align-items: flex-end;">
-        <label style="flex: 2;">
-          Nueva Dirección
-          <input type="text" formControlName="direccion" placeholder="Ej. Av. Siempre Viva 123">
-        </label>
-        <label style="flex: 1;">
-          Distrito
-          <input type="text" formControlName="distrito" placeholder="Miraflores">
-        </label>
-        <button type="button" class="btn-secondary" (click)="addTempDireccion()" style="height: 42px;">+ Agregar</button>
       </div>
-      <div [formGroup]="formDir" class="form-row">
-        <label style="flex: 1;">
-          Referencia
-          <input type="text" formControlName="referencia" placeholder="Frente al parque...">
-        </label>
-        <label style="flex-direction: row; align-items: center; gap: 0.5rem; cursor: pointer; flex: 1; padding-top: 1rem;">
-          <input type="checkbox" formControlName="predeterminada">
-          Es predeterminada
-        </label>
-      </div>
+    </div>
 
-      <div class="modal-footer" style="margin-top: 2rem;">
-        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="saving">
-          {{ saving ? 'Guardando...' : (editingCliente ? 'Actualizar' : 'Guardar') }}
-        </button>
-      </div>
-    </form>
+    <!-- TABLA ESTILO CATALOGO -->
+    <div class="table-responsive-container" style="overflow-x: auto; padding: 0 20px 10px 20px;">
+      <table style="width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px;">
+        <thead>
+          <tr style="background-color: #ffffff;">
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 140px;">Documento</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b;">Cliente / Razón Social</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b;">Contacto Directo</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b;">Dirección de Despacho</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 120px;">Límite Crédito</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 90px;">Estado</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 100px;">Opción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let c of clientesFiltrados" style="border-bottom: 1px solid #f1f5f9; height: 58px;">
+            
+            <!-- Documento Boxed -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <input type="text" [value]="(c.numeroDocumento || 'S/N')" readonly style="width: 100%; padding: 6px 8px; text-align: center; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; font-weight: 700; color: #334155; background-color: #f8fafc; box-sizing: border-box;">
+            </td>
+
+            <!-- Nombre -->
+            <td style="padding: 6px 10px; text-align: left;">
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-weight: 700; font-size: 13px; color: #1e293b;">{{ getClienteNombre(c) }}</span>
+                <span style="font-size: 11px; color: #64748b;" *ngIf="c.email">{{ c.email }}</span>
+              </div>
+            </td>
+
+            <!-- Contacto (WhatsApp Directo + Teléfono) -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <div style="display: flex; align-items: center; justify-content: center; gap: 6px;" *ngIf="c.telefono">
+                <input type="text" [value]="c.telefono" readonly style="width: 100px; padding: 6px 8px; text-align: center; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; font-weight: 600; color: #334155; background-color: #ffffff;">
+                <button type="button" (click)="abrirWhatsapp(c.telefono, getClienteNombre(c))" title="Contactar vía WhatsApp" style="background-color: #25d366; color: white; border: none; padding: 6px 10px; border-radius: 3px; font-size: 12px; cursor: pointer; font-weight: bold;">
+                  💬 WhatsApp
+                </button>
+              </div>
+              <span *ngIf="!c.telefono" style="font-size: 12px; color: #94a3b8;">Sin teléfono</span>
+            </td>
+
+            <!-- Dirección Boxed + Google Maps -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <div style="display: flex; align-items: center; gap: 6px;" *ngIf="c.direccionPrincipal">
+                <input type="text" [value]="c.direccionPrincipal" readonly style="flex: 1; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; color: #475569; background-color: #ffffff; box-sizing: border-box;">
+                <button type="button" (click)="abrirMapa(c.direccionPrincipal)" title="Ver en Google Maps" style="background-color: #4285f4; color: white; border: none; padding: 6px 8px; border-radius: 3px; font-size: 12px; cursor: pointer;">
+                  🗺️
+                </button>
+              </div>
+              <span *ngIf="!c.direccionPrincipal" style="font-size: 12px; color: #94a3b8;">Sin dirección</span>
+            </td>
+
+            <!-- Límite Crédito Boxed -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <input type="text" [value]="'S/ ' + (c.limiteCredito || 0).toFixed(2)" readonly style="width: 100%; padding: 6px 8px; text-align: right; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; font-weight: 700; color: #8b5cf6; background-color: #ffffff; box-sizing: border-box;">
+            </td>
+
+            <!-- Estado Badge -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white;"
+                    [style.background-color]="c.estado === 'A' || !c.estado ? '#00a65a' : '#d9534f'">
+                {{ c.estado === 'A' || !c.estado ? 'ACTIVO' : 'INACTIVO' }}
+              </span>
+            </td>
+
+            <!-- Opción (Botones Cuadrados Rojo/Verde exactamente como en la captura) -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+                <button type="button" (click)="deleteCliente(c)" title="Eliminar Cliente" style="background-color: #d9534f; color: white; border: none; width: 28px; height: 28px; border-radius: 3px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 12px;">
+                  🗑️
+                </button>
+                <button type="button" (click)="openEditModal(c)" title="Editar Cliente & Direcciones" style="background-color: #00a65a; color: white; border: none; width: 28px; height: 28px; border-radius: 3px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 12px;">
+                  ✏️
+                </button>
+              </div>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Spinner o Vacío -->
+    <div *ngIf="loading" style="text-align: center; padding: 30px; color: #64748b;">
+      <p style="margin: 0; font-size: 14px;">Cargando directorio de clientes...</p>
+    </div>
+
+    <div *ngIf="!loading && clientesFiltrados.length === 0" style="padding: 20px; margin: 10px 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #64748b; font-size: 13px;">
+      No se encontraron clientes registrados con los filtros seleccionados.
+    </div>
+
+    <!-- FOOTER TARJETA -->
+    <div class="card-bottom-footer" style="padding: 12px 20px; background-color: #ffffff; border-top: 1px solid #f1f5f9;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Mostrando {{ clientesFiltrados.length }} clientes registrados</span>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL CREAR / EDITAR CLIENTE Y DIRECCIONES -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+  <div class="adminlte-modal" (click)="$event.stopPropagation()" style="background: #ffffff; width: 620px; max-width: 95%; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    
+    <div class="modal-header" style="background: #00a65a; color: #ffffff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 18px; font-weight: 700;">
+        {{ editingCliente ? '✏️ Editar Cliente & Direcciones' : '➕ Registrar Nuevo Cliente' }}
+      </h3>
+      <button type="button" (click)="closeModal()" style="color: #ffffff; background: none; border: none; font-size: 24px; cursor: pointer;"><span>&times;</span></button>
+    </div>
+
+    <div class="modal-body" style="padding: 20px; max-height: 75vh; overflow-y: auto;">
+      <form [formGroup]="form" (ngSubmit)="saveCliente()">
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Tipo Documento *</label>
+            <select formControlName="idTipoDocumento" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+              <option *ngFor="let td of tiposDocumento" [value]="td.idTipoDocumento">
+                {{ td.nombreTipoDocumento || td.nombre }}
+              </option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Número de Documento *</label>
+            <input type="text" formControlName="numeroDocumento" placeholder="Ej. 20601234567 o 45891234" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Nombres / Razón Social *</label>
+            <input type="text" formControlName="nombresRazonSocial" placeholder="Ej. Licorería El Sol SAC" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Apellidos (si aplica)</label>
+            <input type="text" formControlName="apellidos" placeholder="Ej. Mendoza Ríos" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">📱 Teléfono / WhatsApp</label>
+            <input type="text" formControlName="telefono" placeholder="Ej. 987654321" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Correo Electrónico</label>
+            <input type="email" formControlName="email" placeholder="cliente@roma.pe" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <div style="flex: 2;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">📍 Dirección Principal de Entrega</label>
+            <input type="text" formControlName="direccionPrincipal" placeholder="Ej. Av. Larco 456, Miraflores" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Límite Crédito (S/)</label>
+            <input type="number" formControlName="limiteCredito" placeholder="1000" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 15px 0;">
+
+        <!-- SECCIÓN SUCURSALES / DIRECCIONES SECUNDARIAS -->
+        <h4 style="margin: 0 0 10px 0; font-size: 14px; font-weight: 700; color: #1e293b;">🏠 Sucursales y Direcciones de Entrega Secundarias</h4>
+        
+        <div [formGroup]="formDir" style="display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-end;">
+          <input type="text" formControlName="direccion" placeholder="Dirección de sucursal..." style="flex: 2; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+          <input type="text" formControlName="distrito" placeholder="Distrito..." style="flex: 1; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+          <input type="text" formControlName="referencia" placeholder="Referencia..." style="flex: 1; padding: 7px 10px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px;">
+          <button type="button" (click)="addTempDireccion()" style="background: #3b82f6; color: white; border: none; padding: 7px 12px; border-radius: 4px; font-weight: bold; font-size: 12px; cursor: pointer;">+ Anexo</button>
+        </div>
+
+        <div *ngIf="tempDirecciones.length > 0" style="border: 1px solid #e2e8f0; border-radius: 4px; overflow: hidden;">
+          <div *ngFor="let d of tempDirecciones; let idx = index" style="display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f1f5f9; font-size: 12px; color: #334155;">
+            <span>📍 <strong>{{ d.direccion }}</strong> ({{ d.distrito || 'Sin distrito' }}) - <em>Ref: {{ d.referencia || 'S/R' }}</em></span>
+            <button type="button" (click)="removeTempDireccion(idx)" style="color: #d9534f; border: none; background: none; font-weight: bold; cursor: pointer;">✕</button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer" style="background: #f8fafc; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0;">
+      <button type="button" (click)="closeModal()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;">Cancelar</button>
+      <button type="button" (click)="saveCliente()" [disabled]="saving" style="background: #00a65a; color: white; border: none; padding: 8px 18px; border-radius: 4px; font-weight: 700; cursor: pointer;">
+        {{ saving ? 'Guardando...' : (editingCliente ? 'Guardar Cambios' : 'Registrar Cliente') }}
+      </button>
+    </div>
+
   </div>
 </div>
-

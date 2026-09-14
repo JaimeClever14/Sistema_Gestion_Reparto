@@ -9,6 +9,8 @@ export interface RegisterRequest {
   username: string;
   email: string;
   password: string;
+  telefono?: string;
+  direccion?: string;
 }
 
 export interface AuthResponse {
@@ -20,20 +22,25 @@ export interface AuthResponse {
 
 export interface Categoria {
   idCategoria?: number;
-  nombreCategoria: string;
+  nombre?: string;
+  nombreCategoria?: string;
   descripcion?: string;
   estado?: string;
 }
 
 export interface Marca {
   idMarca?: number;
-  nombreMarca: string;
+  nombre?: string;
+  nombreMarca?: string;
+  descripcion?: string;
   estado?: string;
 }
 
 export interface Presentacion {
   idPresentacion?: number;
-  nombrePresentacion: string;
+  nombre?: string;
+  nombrePresentacion?: string;
+  descripcion?: string;
   estado?: string;
 }
 
@@ -51,10 +58,13 @@ export interface Producto {
   stockMaximo?: number;
   imagenUrl?: string;
   descripcion?: string;
+  descuentoPorcentaje?: number;
+  envioGratis?: boolean;
+  activo?: boolean;
   estado?: string;
   fechaRegistro?: string;
 
-  // Relations (optional for frontend expansion)
+  // Relations
   categoria?: Categoria;
   marca?: Marca;
   presentacion?: Presentacion;
@@ -62,7 +72,8 @@ export interface Producto {
 
 export interface TipoDocumento {
   idTipoDocumento?: number;
-  nombreTipoDocumento: string;
+  nombre?: string;
+  nombreTipoDocumento?: string;
   codigoSunat?: string;
 }
 
@@ -70,7 +81,8 @@ export interface Cliente {
   idCliente?: number;
   idTipoDocumento?: number;
   numeroDocumento?: string;
-  nombresRazónSocial: string;
+  nombresRazonSocial?: string;
+  nombresRazónSocial?: string;
   apellidos?: string;
   telefono?: string;
   email?: string;
@@ -84,13 +96,15 @@ export interface Cliente {
 
 export interface EstadoPedido {
   idEstadoPedido?: number;
-  nombreEstado: string;
+  nombreEstado?: string;
+  nombre?: string;
   descripcion?: string;
 }
 
 export interface TipoEntrega {
   idTipoEntrega?: number;
-  nombreTipoEntrega: string;
+  nombreTipoEntrega?: string;
+  nombre?: string;
   descripcion?: string;
 }
 
@@ -108,15 +122,22 @@ export interface Pedido {
   idPedido?: number;
   codigoPedido?: string;
   idCliente?: number;
+  idUsuario?: number;
   idUsuarioVendedor?: number;
+  idEstado?: number;
   idEstadoPedido?: number;
   idTipoEntrega?: number;
+  fecha?: string;
   fechaPedido?: string;
-  montoSubtotal: number;
-  montoIgv: number;
-  montoTotal: number;
+  subtotal?: number;
+  montoSubtotal?: number;
+  igv?: number;
+  montoIgv?: number;
+  total?: number;
+  montoTotal?: number;
   direccionEntrega?: string;
   observaciones?: string;
+  codigoSeguimiento?: string;
   estado?: string;
   cliente?: Cliente;
   estadoPedido?: EstadoPedido;
@@ -126,7 +147,8 @@ export interface Pedido {
 
 export interface MetodoPago {
   idMetodoPago?: number;
-  nombreMetodo: string;
+  nombreMetodo?: string;
+  nombre?: string;
   descripcion?: string;
 }
 
@@ -144,12 +166,14 @@ export interface Pago {
 
 export interface EstadoCredito {
   idEstadoCredito?: number;
-  nombreEstado: string;
+  nombreEstado?: string;
+  nombre?: string;
 }
 
 export interface EstadoCuota {
   idEstadoCuota?: number;
-  nombreEstado: string;
+  nombreEstado?: string;
+  nombre?: string;
 }
 
 export interface Credito {
@@ -179,10 +203,11 @@ export interface Cuota {
 export interface Proveedor {
   idProveedor?: number;
   ruc?: string;
-  razonSocial: string;
+  razonSocial?: string;
   contacto?: string;
   telefono?: string;
   email?: string;
+  direccion?: string;
 }
 
 export interface StatCard {
@@ -195,7 +220,8 @@ export interface StatCard {
 
 export interface Rol {
   idRol?: number;
-  nombreRol: string;
+  nombre?: string;
+  nombreRol?: string;
   descripcion?: string;
 }
 
@@ -205,10 +231,11 @@ export interface Usuario {
   apellidos: string;
   username: string;
   email: string;
-  contrasena?: string; // Solo para creacion
+  contrasena?: string;
   idRol?: number;
   estado?: string;
-  rol?: Rol; // Relacion opcional
+  activo?: boolean;
+  rol?: Rol;
 }
 
 export interface Entrega {
@@ -220,7 +247,7 @@ export interface Entrega {
   fechaAsignacion?: string;
   fechaSalida?: string;
   fechaEntrega?: string;
-  repartidor?: Usuario; // Opcional, para mostrar nombre del repartidor
+  repartidor?: Usuario;
 }
 
 export interface ToastMessage {
@@ -248,7 +275,7 @@ export interface Promocion {
   idPromocion?: number;
   nombre: string;
   descripcion?: string;
-  tipoDescuento: string; // Ej: 'PORCENTAJE', 'MONTO'
+  tipoDescuento: string;
   valorDescuento: number;
   fechaInicio: string;
   fechaFin: string;

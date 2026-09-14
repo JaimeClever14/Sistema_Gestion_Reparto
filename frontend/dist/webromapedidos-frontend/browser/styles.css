@@ -268,6 +268,42 @@ article {
 .admin-theme ::-webkit-scrollbar-thumb:hover {
   background: rgba(250, 204, 21, 0.6);
 }
+.adminlte-page {
+  padding: 15px;
+  background-color: #ecf0f5;
+  min-height: 100%;
+}
+.adminlte-card {
+  background: #ffffff;
+  border-radius: 3px;
+  border-top: 3px solid #d2d6de;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+.card-header {
+  color: #444;
+  display: block;
+  padding: 10px;
+  position: relative;
+  border-bottom: 1px solid #f4f4f4;
+}
+.card-title {
+  display: inline-block;
+  font-size: 18px;
+  margin: 0;
+  line-height: 1;
+}
+.card-tools {
+  position: absolute;
+  right: 10px;
+  top: 5px;
+}
+.card-body {
+  padding: 15px;
+}
+.card-footer {
+  padding: 10px 15px;
+}
 
 /* angular:styles/global:styles */
 /*# sourceMappingURL=styles.css.map */

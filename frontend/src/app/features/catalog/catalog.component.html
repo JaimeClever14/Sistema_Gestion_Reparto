@@ -1,190 +1,452 @@
-<section class="grid-head">
-  <div>
-    <p class="eyebrow">Gestión de Inventarios</p>
-    <h1>Catálogo de Productos</h1>
-    <p class="muted">Administra el inventario de licores, bebidas, precios y existencias.</p>
-  </div>
+<div class="adminlte-page">
 
-  <div class="actions">
-    <button type="button" class="btn-primary" (click)="openNewModal()">
-      ➕ Nuevo Producto
+  <!-- Navegación por Pestañas principales -->
+  <div class="mb-3" style="display: flex; gap: 8px; border-bottom: 2px solid #dee2e6; padding-bottom: 8px;">
+    <button type="button" class="btn btn-sm" [class.btn-primary]="activeTab === 'productos'" [class.btn-outline-secondary]="activeTab !== 'productos'" (click)="activeTab = 'productos'">
+      📦 Productos (Catálogo)
+    </button>
+    <button type="button" class="btn btn-sm" [class.btn-primary]="activeTab === 'categorias'" [class.btn-outline-secondary]="activeTab !== 'categorias'" (click)="activeTab = 'categorias'">
+      🏷️ Categorías ({{ categorias.length }})
+    </button>
+    <button type="button" class="btn btn-sm" [class.btn-primary]="activeTab === 'marcas'" [class.btn-outline-secondary]="activeTab !== 'marcas'" (click)="activeTab = 'marcas'">
+      🔖 Marcas y Presentaciones
     </button>
   </div>
-</section>
 
-<!-- BARRA DE BÚSQUEDA Y FILTROS -->
-<section class="filters-bar glass">
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre o código de barras...">
+  <!-- ── TAB 1: PRODUCTOS ────────────────────────────────────────── -->
+  <div class="adminlte-card" *ngIf="activeTab === 'productos'">
+    <div class="card-header">
+      <h3 class="card-title">Catálogo de Productos</h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-success btn-sm" (click)="openNewModal()">
+          <span style="font-weight: bold;">+</span> Nuevo Producto
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <!-- Filtros -->
+      <div class="row filter-row">
+        <div class="col-md-6">
+          <label>Buscar Artículo:</label>
+          <div class="input-group">
+            <input type="text" class="form-control" [(ngModel)]="searchTerm" placeholder="Nombre o código de barras...">
+            <button class="btn btn-info" type="button">🔍 Buscar</button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <label>Filtrar por Categoría:</label>
+          <select class="form-control" [(ngModel)]="selectedCategoriaId">
+            <option [value]="null">Todas las categorías</option>
+            <option *ngFor="let cat of categorias" [value]="cat.idCategoria">
+              {{ getNombreCat(cat) }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla Productos -->
+      <div class="table-responsive" style="margin-top: 20px;">
+        <table class="table table-bordered table-striped table-hover">
+          <thead>
+            <tr>
+              <th width="75" class="text-center">Imagen</th>
+              <th>Código</th>
+              <th>Artículo</th>
+              <th>Categoría</th>
+              <th>Descripción</th>
+              <th width="100">Stock</th>
+              <th width="120">P. Compra</th>
+              <th width="120">P. Venta</th>
+              <th width="100">Opción</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let prod of productosFiltrados">
+              <td class="text-center align-middle" style="padding: 4px;">
+                <div style="width: 44px; height: 44px; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; overflow: hidden; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                  <img *ngIf="prod.imagenUrl" [src]="prod.imagenUrl" [alt]="prod.nombre" style="width: 100%; height: 100%; object-fit: cover;">
+                  <span *ngIf="!prod.imagenUrl" style="font-size: 20px;">🍷</span>
+                </div>
+              </td>
+              <td>
+                <input type="text" class="form-control form-control-sm"
+                  [value]="prod.codigoBarras || ('PROD-' + prod.idProducto)" readonly>
+              </td>
+              <td><strong>{{ prod.nombre }}</strong></td>
+              <td>
+                <ng-container *ngFor="let c of categorias">
+                  <span *ngIf="c.idCategoria === prod.idCategoria" class="badge badge-info" style="background:#17a2b8; color:#fff; padding:4px 8px; border-radius:4px;">
+                    {{ getNombreCat(c) }}
+                  </span>
+                </ng-container>
+              </td>
+              <td>
+                <input type="text" class="form-control form-control-sm" [value]="prod.descripcion || ''" readonly>
+              </td>
+              <td>
+                <input type="number" class="form-control form-control-sm text-center" [value]="prod.stock" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control form-control-sm text-right"
+                  [value]="prod.precioCompra | number:'1.2-2'" readonly>
+              </td>
+              <td>
+                <input type="text" class="form-control form-control-sm text-right"
+                  [value]="prod.precioVenta | number:'1.2-2'" readonly>
+              </td>
+              <td class="text-center">
+                <button class="btn btn-danger btn-xs option-btn me-1" (click)="deleteProduct(prod)" title="Eliminar">🗑️</button>
+                <button class="btn btn-success btn-xs option-btn" (click)="openEditModal(prod)" title="Editar">✏️</button>
+              </td>
+            </tr>
+            <tr *ngIf="productosFiltrados.length === 0">
+              <td colspan="9" class="text-center" style="padding: 20px; color: #666;">No se encontraron productos.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card-footer" style="display: flex; justify-content: space-between; align-items: center;">
+      <p class="text-muted" style="margin: 0; font-size: 13px;">Mostrando {{ productosFiltrados.length }} productos</p>
+    </div>
   </div>
 
-  <div class="select-box">
-    <select [(ngModel)]="selectedCategoriaId">
-      <option [value]="null">Todas las categorías</option>
-      <option *ngFor="let cat of categorias" [value]="cat.idCategoria">
-        {{ cat.nombreCategoria }}
-      </option>
-    </select>
+  <!-- ── TAB 2: CATEGORÍAS ────────────────────────────────────────── -->
+  <div class="adminlte-card" *ngIf="activeTab === 'categorias'">
+    <div class="card-header">
+      <h3 class="card-title">Gestión de Categorías de Productos</h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-success btn-sm" (click)="openCategoriaModal()">
+          <span style="font-weight: bold;">+</span> Nueva Categoría
+        </button>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-bordered table-striped table-hover">
+          <thead>
+            <tr>
+              <th width="80">ID</th>
+              <th>Nombre de Categoría</th>
+              <th>Descripción</th>
+              <th width="120" class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let cat of categorias">
+              <td>#{{ cat.idCategoria }}</td>
+              <td><strong>{{ getNombreCat(cat) }}</strong></td>
+              <td>{{ cat.descripcion || 'Sin descripción' }}</td>
+              <td class="text-center">
+                <button class="btn btn-primary btn-xs option-btn me-1" (click)="openCategoriaModal(cat)" title="Editar">✏️</button>
+                <button class="btn btn-danger btn-xs option-btn" (click)="deleteCategoria(cat)" title="Eliminar">🗑️</button>
+              </td>
+            </tr>
+            <tr *ngIf="categorias.length === 0">
+              <td colspan="4" class="text-center" style="padding: 20px; color: #666;">No hay categorías registradas.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
-</section>
 
-<!-- GRID DE PRODUCTOS -->
-<section class="cards" *ngIf="!loading && productosFiltrados.length > 0">
-  <article *ngFor="let product of productosFiltrados" class="product glass">
-    <div class="product-header">
-      <span class="code-badge">{{ product.codigoBarras || ('PROD-' + product.idProducto) }}</span>
-      <div class="stock-badge" [class.low]="product.stock <= (product.stockMinimo || 5)">
-        {{ product.stock }} en stock
+  <!-- ── TAB 3: MARCAS Y PRESENTACIONES ─────────────────────────── -->
+  <div class="row" *ngIf="activeTab === 'marcas'">
+    <!-- MARCAS -->
+    <div class="col-md-6">
+      <div class="adminlte-card">
+        <div class="card-header">
+          <h3 class="card-title">Marcas</h3>
+          <div class="card-tools">
+            <button type="button" class="btn btn-success btn-sm" (click)="openMarcaModal()">
+              + Nueva Marca
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th width="60">ID</th>
+                  <th>Marca</th>
+                  <th>Descripción</th>
+                  <th width="90" class="text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let m of marcas">
+                  <td>#{{ m.idMarca }}</td>
+                  <td><strong>{{ getNombreMarc(m) }}</strong></td>
+                  <td>{{ m.descripcion || '-' }}</td>
+                  <td class="text-center">
+                    <button class="btn btn-primary btn-xs option-btn me-1" (click)="openMarcaModal(m)">✏️</button>
+                    <button class="btn btn-danger btn-xs option-btn" (click)="deleteMarca(m)">🗑️</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 
-    <h3>{{ product.nombre }}</h3>
-    <p class="desc">{{ product.descripcion || 'Sin descripción adicional' }}</p>
-
-    <div class="price-row">
-      <div>
-        <span class="price-label">Precio Venta</span>
-        <strong class="price">S/ {{ product.precioVenta.toFixed(2) }}</strong>
-      </div>
-
-      <div class="stock-adjust">
-        <button type="button" class="btn-stock" (click)="adjustStock(product, -1)">-</button>
-        <span>Stock</span>
-        <button type="button" class="btn-stock" (click)="adjustStock(product, 1)">+</button>
+    <!-- PRESENTACIONES -->
+    <div class="col-md-6">
+      <div class="adminlte-card">
+        <div class="card-header">
+          <h3 class="card-title">Presentaciones</h3>
+          <div class="card-tools">
+            <button type="button" class="btn btn-success btn-sm" (click)="openPresentacionModal()">
+              + Nueva Presentación
+            </button>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-bordered table-striped">
+              <thead>
+                <tr>
+                  <th width="60">ID</th>
+                  <th>Presentación</th>
+                  <th>Descripción</th>
+                  <th width="90" class="text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of presentaciones">
+                  <td>#{{ p.idPresentacion }}</td>
+                  <td><strong>{{ getNombrePres(p) }}</strong></td>
+                  <td>{{ p.descripcion || '-' }}</td>
+                  <td class="text-center">
+                    <button class="btn btn-primary btn-xs option-btn me-1" (click)="openPresentacionModal(p)">✏️</button>
+                    <button class="btn btn-danger btn-xs option-btn" (click)="deletePresentacion(p)">🗑️</button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="card-actions">
-      <button type="button" class="btn-action edit" (click)="openEditModal(product)">
-        ✏️ Editar
-      </button>
-      <button type="button" class="btn-action delete" (click)="deleteProduct(product)">
-        🗑️ Eliminar
-      </button>
-    </div>
-  </article>
-</section>
-
-<div class="empty-state glass" *ngIf="!loading && productosFiltrados.length === 0">
-  <p>No se encontraron productos que coincidan con la búsqueda.</p>
 </div>
 
 <!-- MODAL CREAR / EDITAR PRODUCTO -->
 <div class="modal-overlay" *ngIf="showModal">
-  <div class="modal-card glass">
+  <div class="adminlte-modal">
     <div class="modal-header">
-      <h3>{{ editingProduct ? '✏️ Editar Producto' : '🍾 Registrar Nuevo Producto' }}</h3>
-      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
+      <h4 class="modal-title">{{ editingProduct ? 'Editar Producto' : 'Registrar Nuevo Producto' }}</h4>
+      <button type="button" class="close" (click)="closeModal()"><span>&times;</span></button>
     </div>
-
-    <form [formGroup]="form" (ngSubmit)="saveProduct()">
-      <div class="form-row">
-        <label>
-          Código Barras
-          <input type="text" formControlName="codigoBarras" placeholder="LIC-001">
-        </label>
-        <label>
-          Categoría 
-          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaCategoria()">
-            {{ showNuevaCategoria ? 'Cancelar' : '+ Nueva' }}
-          </button>
-          
-          <ng-container *ngIf="!showNuevaCategoria">
-            <select formControlName="idCategoria">
-              <option *ngFor="let cat of categorias" [value]="cat.idCategoria">
-                {{ cat.nombreCategoria }}
-              </option>
-            </select>
-          </ng-container>
-
-          <div *ngIf="showNuevaCategoria" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-            <input type="text" [(ngModel)]="nuevaCategoriaNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre de categoría" style="flex: 1;">
-            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaCategoria()" [disabled]="creandoCategoria || !nuevaCategoriaNombre.trim()">
-              {{ creandoCategoria ? '...' : 'OK' }}
-            </button>
+    <div class="modal-body">
+      <form [formGroup]="form">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label>Código Barras</label>
+            <input type="text" class="form-control" formControlName="codigoBarras" placeholder="LIC-001">
           </div>
-        </label>
-      </div>
-      
-      <div class="form-row">
-        <label>
-          Marca 
-          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaMarca()">
-            {{ showNuevaMarca ? 'Cancelar' : '+ Nueva' }}
-          </button>
-          <ng-container *ngIf="!showNuevaMarca">
-            <select formControlName="idMarca">
-              <option *ngFor="let m of marcas" [value]="m.idMarca">{{ m.nombreMarca }}</option>
-            </select>
-          </ng-container>
-          <div *ngIf="showNuevaMarca" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-            <input type="text" [(ngModel)]="nuevaMarcaNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre marca" style="flex: 1;">
-            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaMarca()" [disabled]="creandoMarca || !nuevaMarcaNombre.trim()">OK</button>
+          <div class="col-md-6 mb-3">
+            <label>Categoría</label>
+            <div class="input-group">
+              <select class="form-control" formControlName="idCategoria">
+                <option *ngFor="let cat of categorias" [value]="cat.idCategoria">{{ getNombreCat(cat) }}</option>
+              </select>
+              <button type="button" class="btn btn-outline-success" (click)="openCategoriaModal()" title="Agregar nueva categoría">+</button>
+            </div>
           </div>
-        </label>
-        
-        <label>
-          Presentación 
-          <button type="button" class="btn-text-small" style="float:right; font-size: 0.8rem; padding: 0; background: none; color: var(--gold);" (click)="toggleNuevaPresentacion()">
-            {{ showNuevaPresentacion ? 'Cancelar' : '+ Nueva' }}
-          </button>
-          <ng-container *ngIf="!showNuevaPresentacion">
-            <select formControlName="idPresentacion">
-              <option *ngFor="let p of presentaciones" [value]="p.idPresentacion">{{ p.nombrePresentacion }}</option>
-            </select>
-          </ng-container>
-          <div *ngIf="showNuevaPresentacion" style="display: flex; gap: 0.5rem; margin-top: 0.25rem;">
-            <input type="text" [(ngModel)]="nuevaPresentacionNombre" [ngModelOptions]="{standalone: true}" placeholder="Nombre pres." style="flex: 1;">
-            <button type="button" class="btn-secondary" style="padding: 0.5rem;" (click)="guardarNuevaPresentacion()" [disabled]="creandoPresentacion || !nuevaPresentacionNombre.trim()">OK</button>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label>Marca</label>
+            <div class="input-group">
+              <select class="form-control" formControlName="idMarca">
+                <option *ngFor="let m of marcas" [value]="m.idMarca">{{ getNombreMarc(m) }}</option>
+              </select>
+              <button type="button" class="btn btn-outline-success" (click)="openMarcaModal()" title="Agregar nueva marca">+</button>
+            </div>
           </div>
-        </label>
-      </div>
+          <div class="col-md-6 mb-3">
+            <label>Presentación</label>
+            <div class="input-group">
+              <select class="form-control" formControlName="idPresentacion">
+                <option *ngFor="let p of presentaciones" [value]="p.idPresentacion">{{ getNombrePres(p) }}</option>
+              </select>
+              <button type="button" class="btn btn-outline-success" (click)="openPresentacionModal()" title="Agregar nueva presentación">+</button>
+            </div>
+          </div>
+        </div>
 
-      <label>
-        Nombre del Producto *
-        <input type="text" formControlName="nombre" placeholder="Ej. Whisky Black Label 750ml">
-      </label>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label>Nombre del Producto *</label>
+            <input type="text" class="form-control" formControlName="nombre" placeholder="Ej. Whisky Blue Label 750ml">
+          </div>
+        </div>
 
-      <label>
-        Descripción / Notas
-        <input type="text" formControlName="descripcion" placeholder="Presentación, grado alcohólico, etc.">
-      </label>
+        <div class="row">
+          <div class="col-md-12 mb-3">
+            <label>Descripción</label>
+            <input type="text" class="form-control" formControlName="descripcion" placeholder="Detalles del producto">
+          </div>
+        </div>
 
-      <div class="form-row">
-        <label>
-          Precio Compra (S/) *
-          <input type="number" step="0.1" formControlName="precioCompra">
-        </label>
-        <label>
-          Precio Venta (S/) *
-          <input type="number" step="0.1" formControlName="precioVenta">
-        </label>
-      </div>
+        <!-- SECCIÓN DE IMAGEN DEL PRODUCTO -->
+        <div class="card mb-3 p-3 style-img-upload-card" style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; margin-bottom: 15px;">
+          <label style="font-weight: bold; color: #1e293b; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; font-size: 14px;">
+            🖼️ Imagen del Producto
+          </label>
 
-      <div class="form-row">
-        <label>
-          Stock Actual *
-          <input type="number" formControlName="stock">
-        </label>
+          <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+            <!-- PREVIEW THUMBNAIL -->
+            <div class="img-preview-box" style="width: 84px; height: 84px; border-radius: 8px; border: 2px solid #e2e8f0; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; flex-shrink: 0;">
+              <img *ngIf="form.get('imagenUrl')?.value" [src]="form.get('imagenUrl')?.value" style="width: 100%; height: 100%; object-fit: contain;">
+              <span *ngIf="!form.get('imagenUrl')?.value" style="font-size: 32px;">🍾</span>
+              <button type="button" *ngIf="form.get('imagenUrl')?.value" (click)="clearImage()" title="Quitar imagen" style="position: absolute; top: 2px; right: 2px; background: rgba(220,53,69,0.9); color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 11px; line-height: 1; cursor: pointer;">✕</button>
+            </div>
 
-        <label>
-          Stock Mínimo
-          <input type="number" formControlName="stockMinimo">
-        </label>
-        
-        <label>
-          Stock Máximo
-          <input type="number" formControlName="stockMaximo">
-        </label>
-      </div>
+            <div style="flex: 1; min-width: 240px;">
+              <!-- FILE UPLOAD INPUT -->
+              <div style="margin-bottom: 8px;">
+                <label class="btn btn-sm btn-primary" style="cursor: pointer; margin-bottom: 2px; display: inline-flex; align-items: center; gap: 6px; font-weight: bold; background: #0073b7; border-color: #0073b7;">
+                  📁 Subir imagen desde tu equipo
+                  <input type="file" accept="image/*" (change)="onFileSelected($event)" style="display: none;">
+                </label>
+                <small class="text-muted" style="display: block; font-size: 11px;">Formatos recomendados: PNG, JPG, WEBP</small>
+              </div>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="saving">
-          {{ saving ? 'Guardando...' : (editingProduct ? 'Actualizar Producto' : 'Guardar Producto') }}
-        </button>
-      </div>
-    </form>
+              <!-- URL INPUT -->
+              <div class="input-group input-group-sm">
+                <span class="input-group-text" style="background: #e2e8f0; font-weight: 600;">🌐 URL</span>
+                <input type="text" class="form-control" formControlName="imagenUrl" placeholder="https://... o pega el enlace directo de la imagen">
+              </div>
+            </div>
+          </div>
+
+          <!-- PRESET IMAGES QUICK SELECTOR -->
+          <div style="margin-top: 10px; border-top: 1px solid #e2e8f0; padding-top: 8px;">
+            <small style="font-weight: 600; color: #64748b; display: block; margin-bottom: 6px;">⚡ O asigna una imagen de licor predefinida en 1 clic:</small>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+              <button type="button" *ngFor="let item of PRESET_IMAGES" (click)="selectPresetImage(item.url)" class="btn btn-xs btn-outline-secondary" style="font-size: 11px; padding: 4px 10px; border-radius: 12px; background: #fff; border: 1px solid #cbd5e1; color: #334155; font-weight: 500;">
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label>Stock Inicial</label>
+            <input type="number" class="form-control" formControlName="stock">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>P. Compra (S/)</label>
+            <input type="number" class="form-control" formControlName="precioCompra">
+          </div>
+          <div class="col-md-4 mb-3">
+            <label>P. Venta Público (S/)</label>
+            <input type="number" class="form-control" formControlName="precioVenta">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" (click)="saveProduct()" [disabled]="saving">
+        <i class="fa fa-save"></i> {{ saving ? 'Guardando...' : 'Guardar Producto' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="closeModal()">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR CATEGORÍA -->
+<div class="modal-overlay" *ngIf="showCategoriaModal">
+  <div class="adminlte-modal" style="max-width: 450px;">
+    <div class="modal-header">
+      <h4 class="modal-title">{{ editingCategoria ? 'Editar Categoría' : 'Nueva Categoría' }}</h4>
+      <button type="button" class="close" (click)="closeCategoriaModal()"><span>&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="catForm">
+        <div class="mb-3">
+          <label>Nombre de la Categoría *</label>
+          <input type="text" class="form-control" formControlName="nombre" placeholder="Ej. Licores, Cervezas, Vinos...">
+        </div>
+        <div class="mb-3">
+          <label>Descripción</label>
+          <textarea class="form-control" formControlName="descripcion" rows="3" placeholder="Descripción opcional"></textarea>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" (click)="saveCategoria()" [disabled]="savingCategoria">
+        {{ savingCategoria ? 'Guardando...' : 'Guardar Categoría' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="closeCategoriaModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR MARCA -->
+<div class="modal-overlay" *ngIf="showMarcaModal">
+  <div class="adminlte-modal" style="max-width: 450px;">
+    <div class="modal-header">
+      <h4 class="modal-title">{{ editingMarca ? 'Editar Marca' : 'Nueva Marca' }}</h4>
+      <button type="button" class="close" (click)="closeMarcaModal()"><span>&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="marcaForm">
+        <div class="mb-3">
+          <label>Nombre de la Marca *</label>
+          <input type="text" class="form-control" formControlName="nombre" placeholder="Ej. Pilsen, Johnny Walker...">
+        </div>
+        <div class="mb-3">
+          <label>Descripción</label>
+          <input type="text" class="form-control" formControlName="descripcion" placeholder="Descripción opcional">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" (click)="saveMarca()" [disabled]="savingMarca">
+        {{ savingMarca ? 'Guardando...' : 'Guardar Marca' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="closeMarcaModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CREAR / EDITAR PRESENTACIÓN -->
+<div class="modal-overlay" *ngIf="showPresentacionModal">
+  <div class="adminlte-modal" style="max-width: 450px;">
+    <div class="modal-header">
+      <h4 class="modal-title">{{ editingPresentacion ? 'Editar Presentación' : 'Nueva Presentación' }}</h4>
+      <button type="button" class="close" (click)="closePresentacionModal()"><span>&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <form [formGroup]="presForm">
+        <div class="mb-3">
+          <label>Nombre de Presentación *</label>
+          <input type="text" class="form-control" formControlName="nombre" placeholder="Ej. Botella 750ml, Six Pack, Caja...">
+        </div>
+        <div class="mb-3">
+          <label>Descripción</label>
+          <input type="text" class="form-control" formControlName="descripcion" placeholder="Descripción opcional">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-success" (click)="savePresentacion()" [disabled]="savingPresentacion">
+        {{ savingPresentacion ? 'Guardando...' : 'Guardar Presentación' }}
+      </button>
+      <button type="button" class="btn btn-secondary" (click)="closePresentacionModal()">Cancelar</button>
+    </div>
   </div>
 </div>

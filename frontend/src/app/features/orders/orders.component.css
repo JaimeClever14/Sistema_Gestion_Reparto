@@ -170,8 +170,29 @@
   width: fit-content;
 }
 
+.badge-status.pending {
+  background: rgba(249, 115, 22, 0.12); /* orange-500 */
+  color: #fb923c; /* orange-400 */
+}
+
+.badge-status.accepted {
+  background: rgba(59, 130, 246, 0.12); /* blue-500 */
+  color: #60a5fa; /* blue-400 */
+}
+
+.badge-status.onway {
+  background: rgba(168, 85, 247, 0.12); /* purple-500 */
+  color: #c084fc; /* purple-400 */
+}
+
 .badge-status.completed {
   background: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.btn-icon.success:hover {
+  background: rgba(34, 197, 94, 0.2);
+  border-color: rgba(34, 197, 94, 0.4);
   color: #4ade80;
 }
 

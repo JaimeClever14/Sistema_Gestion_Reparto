@@ -37,6 +37,11 @@ export class VendorPanelComponent implements OnInit {
   direccionesCliente: DireccionCliente[] = [];
   selectedDireccionId: number | null = null;
 
+  posSearchQuery = '';
+  selectedCatFilter = 'TODOS';
+
+  posClienteSearchQuery = '';
+
   cart: { producto: Producto; cantidad: number; precioUnitario: number; subtotal: number }[] = [];
 
   saving      = false;
@@ -46,14 +51,97 @@ export class VendorPanelComponent implements OnInit {
   pedidoQ     = '';
   productoQ   = '';
 
+  // Modal crear nuevo cliente desde vendedor
+  showModalNewCliente = false;
+  newClienteNombre = '';
+  newClienteDoc = '';
+  newClienteTel = '';
+  newClienteEmail = '';
+  newClienteDir = '';
+  newClienteLimite = 1000;
+
+  clienteDocFilter = 'TODOS';
+
+  get posClientesFiltrados(): Cliente[] {
+    const list = this.clientes;
+    if (!this.posClienteSearchQuery.trim()) return list;
+    const q = this.posClienteSearchQuery.trim().toLowerCase();
+    return list.filter(c => {
+      const nm = this.nombre(c).toLowerCase();
+      const doc = (c.numeroDocumento || '').toLowerCase();
+      const tel = (c.telefono || '').toLowerCase();
+      const em = (c.email || '').toLowerCase();
+      const dir = (c.direccionPrincipal || '').toLowerCase();
+      const ap = (c.apellidos || '').toLowerCase();
+      return nm.includes(q) || doc.includes(q) || tel.includes(q) || em.includes(q) || dir.includes(q) || ap.includes(q);
+    });
+  }
+
+  get selectedClienteObj(): Cliente | undefined {
+    return this.clientes.find(c => c.idCliente === Number(this.selectedClienteId));
+  }
+
+  selectClientePos(c: Cliente): void {
+    this.selectedClienteId = c.idCliente ?? null;
+    this.posClienteSearchQuery = '';
+    this.onClienteChange();
+  }
+
+  clearSelectedCliente(): void {
+    this.selectedClienteId = null;
+    this.direccionEntrega = '';
+    this.direccionesCliente = [];
+    this.selectedDireccionId = null;
+  }
+
+  get posProductosFiltrados(): Producto[] {
+    let prods = this.productos;
+    if (this.selectedCatFilter !== 'TODOS') {
+      const cat = this.selectedCatFilter.toLowerCase();
+      prods = prods.filter(p => p.nombre.toLowerCase().includes(cat) || (p.descripcion && p.descripcion.toLowerCase().includes(cat)));
+    }
+    if (this.posSearchQuery.trim()) {
+      const q = this.posSearchQuery.trim().toLowerCase();
+      prods = prods.filter(p => 
+        p.nombre.toLowerCase().includes(q) ||
+        (p.codigoBarras && p.codigoBarras.toLowerCase().includes(q)) ||
+        (p.descripcion && p.descripcion.toLowerCase().includes(q))
+      );
+    }
+    return prods;
+  }
+
+  quickAddToCart(prod: Producto): void {
+    if (!prod || prod.stock <= 0) return;
+    const ex = this.cart.find(i => i.producto.idProducto === prod.idProducto);
+    if (ex) {
+      ex.cantidad += 1;
+      ex.subtotal = +(ex.cantidad * ex.precioUnitario).toFixed(2);
+    } else {
+      this.cart.push({
+        producto: prod,
+        cantidad: 1,
+        precioUnitario: prod.precioVenta,
+        subtotal: prod.precioVenta
+      });
+    }
+  }
+
   ngOnInit(): void {
     this.loadAll();
   }
 
   loadAll(): void {
     this.api.get<Cliente[]>('/clientes').subscribe({
-      next: d => { this.clientes  = d ?? this.demoClientes(); this.loadingC = false; },
-      error:()  => { this.clientes  = this.demoClientes();        this.loadingC = false; }
+      next: d => { 
+        const base = (d && d.length > 0) ? d : this.demoClientes();
+        this.clientes = this.mergeWithRegisteredClients(base); 
+        this.loadingC = false; 
+      },
+      error:()  => { 
+        this.clientes = this.mergeWithRegisteredClients(this.demoClientes()); 
+        this.loadingC = false; 
+      }
     });
     this.api.get<Producto[]>('/productos').subscribe({
       next: d => { this.productos = d ?? this.demoProductos(); this.loadingP = false; },
@@ -65,9 +153,56 @@ export class VendorPanelComponent implements OnInit {
     });
   }
 
+  private mergeWithRegisteredClients(baseClients: Cliente[]): Cliente[] {
+    const list = [...baseClients];
+    try {
+      const stored = localStorage.getItem('roma_registered_clients');
+      if (stored) {
+        const registered: Cliente[] = JSON.parse(stored);
+        for (const reg of registered) {
+          const regName = this.nombre(reg).toLowerCase();
+          const exists = list.some(c => 
+            (c.email && reg.email && c.email.toLowerCase() === reg.email.toLowerCase()) ||
+            (c.numeroDocumento && reg.numeroDocumento && c.numeroDocumento === reg.numeroDocumento) ||
+            (this.nombre(c).toLowerCase() === regName)
+          );
+          if (!exists) {
+            list.unshift(reg);
+          }
+        }
+      }
+
+      const profileStr = localStorage.getItem('roma_user_profile');
+      if (profileStr) {
+        const profile = JSON.parse(profileStr);
+        if (profile && profile.email) {
+          const name = profile.nombre || profile.nombres || profile.email;
+          const exists = list.some(c => c.email && c.email.toLowerCase() === profile.email.toLowerCase());
+          if (!exists) {
+            list.unshift({
+              idCliente: Date.now(),
+              idTipoDocumento: 1,
+              numeroDocumento: profile.dni || profile.documento || '45891201',
+              nombresRazonSocial: name,
+              nombresRazónSocial: name,
+              telefono: profile.telefono || '987654321',
+              email: profile.email,
+              direccionPrincipal: profile.direccion || 'Av. Principal 123, Lima',
+              limiteCredito: 1500,
+              estado: 'A'
+            });
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error merging registered clients', e);
+    }
+    return list;
+  }
+
   private merge(base: Pedido[]): Pedido[] {
     try {
-      const raw = localStorage.getItem('roma_shared_orders');
+      const raw = localStorage.getItem('roma_shared_orders_DISABLED');
       if (!raw) return base;
       const saved: Pedido[] = JSON.parse(raw);
       const map = new Map<string, Pedido>();
@@ -99,39 +234,75 @@ export class VendorPanelComponent implements OnInit {
     if (!this.selectedClienteId || this.cart.length === 0) return;
     this.saving = true;
     const cliente = this.clientes.find(c => c.idCliente === Number(this.selectedClienteId));
-    const pedido: Pedido = {
-      codigoPedido:    'PED-' + Date.now(),
-      idCliente:       Number(this.selectedClienteId),
-      cliente:         cliente,
-      montoSubtotal:   this.subtotal,
-      montoIgv:        this.igv,
-      montoTotal:      this.total,
+    
+    const sub = this.subtotal;
+    const igvVal = this.igv;
+    const tot = this.total;
+
+    const payload: any = {
+      codigoPedido: 'PED-' + Date.now(),
+      idCliente: Number(this.selectedClienteId),
+      idUsuario: 1,
+      idEstado: 1,
+      idTipoEntrega: 1,
+      subtotal: sub,
+      igv: igvVal,
+      total: tot,
+      montoSubtotal: sub,
+      montoIgv: igvVal,
+      montoTotal: tot,
       direccionEntrega: this.direccionEntrega || cliente?.direccionPrincipal || '',
-      observaciones:   this.observaciones,
-      estado:          'A',
-      fechaPedido:     new Date().toISOString(),
-      detalles:        this.cart.map(i => ({
-        idProducto:     i.producto.idProducto,
-        cantidad:       i.cantidad,
+      observaciones: this.observaciones,
+      estado: 'A',
+      detalles: this.cart.map(i => ({
+        idProducto: i.producto.idProducto,
+        cantidad: i.cantidad,
         precioUnitario: i.precioUnitario,
-        subtotal:       i.subtotal,
-        producto:       i.producto
-      } as DetallePedido))
+        subtotal: i.subtotal
+      }))
     };
 
-    this.api.post<Pedido>('/pedidos', pedido).subscribe({
-      next:  saved  => this.afterVenta(saved  ?? pedido),
-      error: ()     => this.afterVenta(pedido)
+    this.api.post<Pedido>('/pedidos', payload).subscribe({
+      next: saved => {
+        const fullOrder: Pedido = {
+          ...payload,
+          ...saved,
+          cliente: cliente,
+          detalles: this.cart.map(i => ({
+            idProducto: i.producto.idProducto,
+            cantidad: i.cantidad,
+            precioUnitario: i.precioUnitario,
+            subtotal: i.subtotal,
+            producto: i.producto
+          }))
+        };
+        this.afterVenta(fullOrder);
+      },
+      error: () => {
+        const fullOrder: Pedido = {
+          idPedido: Date.now(),
+          ...payload,
+          cliente: cliente,
+          detalles: this.cart.map(i => ({
+            idProducto: i.producto.idProducto,
+            cantidad: i.cantidad,
+            precioUnitario: i.precioUnitario,
+            subtotal: i.subtotal,
+            producto: i.producto
+          }))
+        };
+        this.afterVenta(fullOrder);
+      }
     });
   }
 
   private afterVenta(p: Pedido): void {
     this.pedidos = [p, ...this.pedidos];
-    const existing: Pedido[] = JSON.parse(localStorage.getItem('roma_shared_orders') ?? '[]');
-    localStorage.setItem('roma_shared_orders', JSON.stringify([p, ...existing]));
+    const existing: Pedido[] = JSON.parse(localStorage.getItem('roma_shared_orders_DISABLED') ?? '[]');
+    localStorage.setItem('roma_shared_orders_DISABLED', JSON.stringify([p, ...existing]));
     this.cart = []; this.selectedClienteId = null; this.direccionEntrega = ''; this.observaciones = '';
     this.saving = false;
-    this.toast(`✅ Pedido ${p.codigoPedido} registrado — S/ ${p.montoTotal.toFixed(2)}`);
+    this.toast(`✅ Pedido ${p.codigoPedido} registrado — S/ ${(p.total || p.montoTotal || 0).toFixed(2)}`);
     this.activeTab = 'pedidos';
   }
 
@@ -140,15 +311,35 @@ export class VendorPanelComponent implements OnInit {
     setTimeout(() => { if (this.toastOk === msg) this.toastOk = ''; }, 5000);
   }
 
-  // ── GETTERS DE NOMBRE ──────────────────────────────────────────────
+  // ── GETTERS DE NOMBRE & FILTRADO DE CLIENTES ───────────────────────
   nombre(c: any): string {
-    return c?.nombresRazónSocial ?? c?.nombresRazonSocial ?? c?.razonSocial ?? '—';
+    if (!c) return '—';
+    const nm = c.nombresRazónSocial || c.nombresRazonSocial || c.razonSocial;
+    if (nm && nm.trim()) return nm.trim();
+    if (c.nombres || c.apellidos) return `${c.nombres || ''} ${c.apellidos || ''}`.trim();
+    if (c.email) return c.email;
+    return '—';
   }
 
   get clientesF(): Cliente[] {
-    if (!this.clienteQ) return this.clientes;
-    const q = this.clienteQ.toLowerCase();
-    return this.clientes.filter(c => this.nombre(c).toLowerCase().includes(q) || (c.numeroDocumento ?? '').includes(q));
+    return this.clientes.filter(c => {
+      const q = (this.clienteQ || '').trim().toLowerCase();
+      const nm = this.nombre(c).toLowerCase();
+      const doc = (c.numeroDocumento || '').toLowerCase();
+      const tel = (c.telefono || '').toLowerCase();
+      const em = (c.email || '').toLowerCase();
+      const dir = (c.direccionPrincipal || '').toLowerCase();
+      const ap = (c.apellidos || '').toLowerCase();
+
+      const matchSearch = !q || nm.includes(q) || doc.includes(q) || tel.includes(q) || em.includes(q) || dir.includes(q) || ap.includes(q);
+
+      const isRuc = String(c.idTipoDocumento) === '2' || doc.length === 11;
+      const matchDoc = this.clienteDocFilter === 'TODOS' ||
+        (this.clienteDocFilter === 'RUC' && isRuc) ||
+        (this.clienteDocFilter === 'DNI' && !isRuc);
+
+      return matchSearch && matchDoc;
+    });
   }
 
   get pedidosF(): Pedido[] {
@@ -164,7 +355,7 @@ export class VendorPanelComponent implements OnInit {
   }
 
   get kpiPedidos(): number { return this.pedidos.length; }
-  get kpiMonto():   number { return +this.pedidos.reduce((s, p) => s + (p.montoTotal ?? 0), 0).toFixed(2); }
+  get kpiMonto():   number { return +this.pedidos.reduce((s, p) => s + (p.total ?? p.montoTotal ?? 0), 0).toFixed(2); }
 
   logout(): void { this.auth.logout(); }
 
@@ -172,6 +363,67 @@ export class VendorPanelComponent implements OnInit {
     this.selectedClienteId = id ?? null;
     this.activeTab = 'nueva-venta';
     this.onClienteChange();
+  }
+
+  openModalNewCliente(): void {
+    this.newClienteNombre = '';
+    this.newClienteDoc = '';
+    this.newClienteTel = '';
+    this.newClienteEmail = '';
+    this.newClienteDir = '';
+    this.newClienteLimite = 1000;
+    this.showModalNewCliente = true;
+  }
+
+  closeModalNewCliente(): void {
+    this.showModalNewCliente = false;
+  }
+
+  saveNuevoCliente(): void {
+    if (!this.newClienteNombre.trim() || !this.newClienteDoc.trim()) {
+      alert('Debes ingresar al menos el nombre/razón social y el número de documento.');
+      return;
+    }
+
+    const newCli: Cliente = {
+      idCliente: Date.now(),
+      idTipoDocumento: this.newClienteDoc.trim().length === 11 ? 2 : 1,
+      numeroDocumento: this.newClienteDoc.trim(),
+      nombresRazónSocial: this.newClienteNombre.trim(),
+      nombresRazonSocial: this.newClienteNombre.trim(),
+      telefono: this.newClienteTel.trim() || '987654321',
+      email: this.newClienteEmail.trim() || 'cliente@roma.pe',
+      direccionPrincipal: this.newClienteDir.trim() || 'Av. Principal 123, Miraflores',
+      limiteCredito: this.newClienteLimite,
+      estado: 'A'
+    };
+
+    this.api.post<Cliente>('/clientes', newCli).subscribe({
+      next: res => {
+        this.clientes.unshift(res);
+        this.saveRegisteredClientLocal(res);
+        this.closeModalNewCliente();
+        this.toast(`✅ Cliente "${newCli.nombresRazonSocial}" creado exitosamente`);
+      },
+      error: () => {
+        this.clientes.unshift(newCli);
+        this.saveRegisteredClientLocal(newCli);
+        this.closeModalNewCliente();
+        this.toast(`✅ Cliente "${newCli.nombresRazonSocial}" registrado localmente`);
+      }
+    });
+  }
+
+  private saveRegisteredClientLocal(c: Cliente): void {
+    try {
+      const stored = localStorage.getItem('roma_registered_clients');
+      let registeredList: any[] = stored ? JSON.parse(stored) : [];
+      registeredList = registeredList.filter(item => item.email !== c.email);
+      registeredList.unshift(c);
+      localStorage.setItem('roma_registered_clients', JSON.stringify(registeredList));
+    } catch (e) {
+      console.warn('Error saving registered client', e);
+    }
   }
 
   onClienteChange(): void {
@@ -232,12 +484,12 @@ export class VendorPanelComponent implements OnInit {
 
   private demoProductos(): Producto[] {
     return [
-      { idProducto: 1, codigoBarras: 'LIC-001', nombre: 'Whisky Johnnie Walker Black Label 750ml', descripcion: 'Whisky escocés 12 años', precioCompra: 80, precioVenta: 129.90, stock: 24, estado: 'A' },
-      { idProducto: 2, codigoBarras: 'LIC-002', nombre: 'Vodka Absolut Original 750ml',            descripcion: 'Vodka sueco de trigo',   precioCompra: 40, precioVenta:  69.00, stock: 18, estado: 'A' },
-      { idProducto: 3, codigoBarras: 'LIC-003', nombre: 'Ron Cartavio Aniversario 750ml',           descripcion: 'Ron peruano añejado',    precioCompra: 25, precioVenta:  45.50, stock: 12, estado: 'A' },
-      { idProducto: 4, codigoBarras: 'LIC-004', nombre: 'Pisco Cuatro Gallos Quebranta 750ml',     descripcion: 'Pisco puro de Ica',      precioCompra: 25, precioVenta:  42.00, stock: 20, estado: 'A' },
-      { idProducto: 5, codigoBarras: 'BEB-001', nombre: 'Cerveza Cusqueña Dorada Pack 6x330ml',    descripcion: 'Cerveza premium',        precioCompra: 18, precioVenta:  28.50, stock: 45, estado: 'A' },
-      { idProducto: 6, codigoBarras: 'VIN-001', nombre: 'Vino Tacama Gran Blanco 750ml',           descripcion: 'Vino blanco peruano',    precioCompra: 20, precioVenta:  38.00, stock: 16, estado: 'A' }
+      { idProducto: 1, codigoBarras: 'LIC-001', nombre: 'Whisky Johnnie Walker Black Label 750ml', descripcion: 'Whisky escocés 12 años', precioCompra: 80, precioVenta: 129.90, stock: 24, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=500&auto=format&fit=crop&q=80' },
+      { idProducto: 2, codigoBarras: 'LIC-002', nombre: 'Vodka Absolut Original 750ml',            descripcion: 'Vodka sueco de trigo',   precioCompra: 40, precioVenta:  69.00, stock: 18, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=500&auto=format&fit=crop&q=80' },
+      { idProducto: 3, codigoBarras: 'LIC-003', nombre: 'Ron Cartavio Aniversario 750ml',           descripcion: 'Ron peruano añejado',    precioCompra: 25, precioVenta:  45.50, stock: 12, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1614313511387-1436a4480edd?w=500&auto=format&fit=crop&q=80' },
+      { idProducto: 4, codigoBarras: 'LIC-004', nombre: 'Pisco Cuatro Gallos Quebranta 750ml',     descripcion: 'Pisco puro de Ica',      precioCompra: 25, precioVenta:  42.00, stock: 20, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&auto=format&fit=crop&q=80' },
+      { idProducto: 5, codigoBarras: 'BEB-001', nombre: 'Cerveza Cusqueña Dorada Pack 6x330ml',    descripcion: 'Cerveza premium',        precioCompra: 18, precioVenta:  28.50, stock: 45, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=500&auto=format&fit=crop&q=80' },
+      { idProducto: 6, codigoBarras: 'VIN-001', nombre: 'Vino Tacama Gran Blanco 750ml',           descripcion: 'Vino blanco peruano',    precioCompra: 20, precioVenta:  38.00, stock: 16, estado: 'A', imagenUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&auto=format&fit=crop&q=80' }
     ];
   }
 }

@@ -3,6 +3,7 @@ import { CommonModule, DecimalPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../core/api.service';
 import { AuthService } from '../../core/auth.service';
+import { NotificationService } from '../../core/notification.service';
 import { Pedido } from '../../core/models';
 
 @Component({
@@ -16,15 +17,32 @@ export class DeliveryPanelComponent implements OnInit {
 
   private api = inject(ApiService);
   auth        = inject(AuthService);
+  notifService = inject(NotificationService);
 
   pedidos: Pedido[] = [];
   loading = true;
-  filter: 'ALL' | 'PENDING' | 'ONWAY' | 'DONE' = 'ALL';
+  filter: 'ALL' | 'PENDING' | 'DONE' = 'ALL';
   search  = '';
   toast   = '';
+  showNotifMenu = false;
 
   ngOnInit(): void {
     this.cargar();
+  }
+
+  toggleNotifMenu(): void {
+    this.showNotifMenu = !this.showNotifMenu;
+    if (this.showNotifMenu) {
+      this.notifService.markAllAsRead('REPARTIDOR');
+    }
+  }
+
+  onSelectNotification(n: any): void {
+    this.showNotifMenu = false;
+    this.notifService.markAsRead(n.id);
+    if (n.orderCode) {
+      this.search = n.orderCode;
+    }
   }
 
   cargar(): void {
@@ -37,56 +55,81 @@ export class DeliveryPanelComponent implements OnInit {
 
   private merge(base: Pedido[]): Pedido[] {
     try {
-      const raw = localStorage.getItem('roma_shared_orders');
-      if (!raw) return base.length ? base : this.demoData();
+      const raw = localStorage.getItem('roma_shared_orders_DISABLED');
+      if (!raw) return base.length ? base : [];
       const shared: Pedido[] = JSON.parse(raw);
       const map = new Map<string, Pedido>();
       base.forEach(p   => map.set(key(p), p));
       shared.forEach(p => { if (!map.has(key(p))) map.set(key(p), p); });
       const list = Array.from(map.values());
-      return list.length ? list : this.demoData();
-    } catch { return base.length ? base : this.demoData(); }
+      return list.length ? list : [];
+    } catch { return base.length ? base : []; }
   }
 
   private saveShared(): void {
-    try { localStorage.setItem('roma_shared_orders', JSON.stringify(this.pedidos)); } catch { /* noop */ }
+    try { localStorage.setItem('roma_shared_orders_DISABLED', JSON.stringify(this.pedidos)); } catch { /* noop */ }
   }
 
   // ── FILTROS ────────────────────────────────────────────────────────
   get pedidosFiltrados(): Pedido[] {
     return this.pedidos.filter(p => {
-      if (this.filter === 'PENDING' && p.estado !== 'A') return false;
-      if (this.filter === 'ONWAY'   && p.estado !== 'E') return false;
+      if (this.filter === 'PENDING' && p.estado === 'F') return false;
       if (this.filter === 'DONE'    && p.estado !== 'F') return false;
+      
       if (this.search) {
-        const q = this.search.toLowerCase();
+        const q = this.search.trim().toLowerCase();
         return (p.codigoPedido ?? '').toLowerCase().includes(q)
           || this.nombreCliente(p.cliente).toLowerCase().includes(q)
-          || (p.direccionEntrega ?? '').toLowerCase().includes(q);
+          || (p.direccionEntrega ?? '').toLowerCase().includes(q)
+          || (p.cliente?.telefono ?? '').includes(q);
       }
       return true;
     });
   }
 
   // ── KPIs ──────────────────────────────────────────────────────────
-  get kpiPending(): number { return this.pedidos.filter(p => p.estado === 'A').length; }
-  get kpiOnWay():   number { return this.pedidos.filter(p => p.estado === 'E').length; }
+  get kpiTotal():   number { return this.pedidos.length; }
+  get kpiPending(): number { return this.pedidos.filter(p => p.estado !== 'F').length; }
   get kpiDone():    number { return this.pedidos.filter(p => p.estado === 'F').length; }
-  get kpiCobrar():  number { return +this.pedidos.filter(p => p.estado !== 'F').reduce((s, p) => s + (p.montoTotal ?? 0), 0).toFixed(2); }
+  get kpiCobrar():  number { 
+    return +this.pedidos
+      .filter(p => p.estado !== 'F')
+      .reduce((s, p) => s + (p.total ?? p.montoTotal ?? 0), 0)
+      .toFixed(2); 
+  }
 
-  // ── ACCIONES ──────────────────────────────────────────────────────
-  iniciarRuta(p: Pedido): void {
-    p.estado = 'E';
-    this.saveShared();
-    this.api.put(`/pedidos/${p.idPedido}`, p).subscribe();
-    this.showToast(`🛵 Ruta iniciada — ${p.codigoPedido}`);
+  // 🚀 ACCIONES 🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀
+  recargar(): void {
+    this.cargar();
+    this.showToast('🔄 Lista de pedidos actualizada');
   }
 
   confirmarEntrega(p: Pedido): void {
     p.estado = 'F';
     this.saveShared();
-    this.api.put(`/pedidos/${p.idPedido}`, p).subscribe();
-    this.showToast(`✅ Entrega confirmada — ${p.codigoPedido}`);
+    if (p.idPedido) this.api.put(`/pedidos/${p.idPedido}`, p).subscribe();
+
+    const code = p.codigoPedido || String(p.idPedido);
+    
+    // Notificar al CLIENTE
+    this.notifService.notify(
+      'CLIENTE',
+      '✅ ¡Pedido Entregado con Éxito!',
+      `Tu pedido #${code} ha sido entregado correctamente en tu domicilio. ¡Gracias por confiar en RomaPedidos!`,
+      code,
+      'success'
+    );
+
+    // Notificar al ADMIN
+    this.notifService.notify(
+      'ADMIN',
+      '✅ Despacho Entregado',
+      `El repartidor finalizó la entrega del pedido #${code}.`,
+      code,
+      'success'
+    );
+
+    this.showToast(`✅ Entrega confirmada con éxito — #${code}`);
   }
 
   private showToast(msg: string): void {
@@ -99,8 +142,16 @@ export class DeliveryPanelComponent implements OnInit {
     window.open(`https://maps.google.com?q=${encodeURIComponent(dir + ', Lima, Peru')}`, '_blank');
   }
 
+  abrirWhatsapp(tel?: string, clienteNombre?: string): void {
+    if (!tel) return;
+    const cleanNum = tel.replace(/\D/g, '');
+    const numConCodigo = cleanNum.startsWith('51') ? cleanNum : '51' + cleanNum;
+    const msg = encodeURIComponent(`Hola ${clienteNombre || 'estimado(a)'}, te saluda el repartidor de RomaPedidos. Estoy en camino con tu pedido.`);
+    window.open(`https://wa.me/${numConCodigo}?text=${msg}`, '_blank');
+  }
+
   nombreCliente(c: any): string {
-    return c?.nombresRazónSocial ?? c?.nombresRazonSocial ?? c?.razonSocial ?? 'Cliente';
+    return c?.nombresRazónSocial ?? c?.nombresRazonSocial ?? c?.razonSocial ?? (c?.nombres ? `${c.nombres} ${c.apellidos || ''}`.trim() : 'Cliente');
   }
 
   logout(): void { this.auth.logout(); }

@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["src/app/core/api.service.ts"],
-  "sourcesContent": ["import { inject, Injectable } from '@angular/core';\r\nimport { HttpClient } from '@angular/common/http';\r\nimport { Observable } from 'rxjs';\r\n\r\n@Injectable({ providedIn: 'root' })\r\nexport class ApiService {\r\n\r\n  private readonly http = inject(HttpClient);\r\n  private readonly baseUrl = 'http://localhost:8080/api';\r\n\r\n  get<T>(path: string): Observable<T> {\r\n    return this.http.get<T>(`${this.baseUrl}${path}`);\r\n  }\r\n\r\n  post<T>(path: string, body: unknown): Observable<T> {\r\n    return this.http.post<T>(`${this.baseUrl}${path}`, body);\r\n  }\r\n\r\n  put<T>(path: string, body: unknown): Observable<T> {\r\n    return this.http.put<T>(`${this.baseUrl}${path}`, body);\r\n  }\r\n\r\n  delete<T>(path: string): Observable<T> {\r\n    return this.http.delete<T>(`${this.baseUrl}${path}`);\r\n  }\r\n}"],
-  "mappings": ";;;;;;;AAKM,IAAO,aAAP,MAAO,YAAU;EAEJ,OAAO,OAAO,UAAU;EACxB,UAAU;EAE3B,IAAO,MAAY;AACjB,WAAO,KAAK,KAAK,IAAO,GAAG,KAAK,OAAO,GAAG,IAAI,EAAE;EAClD;EAEA,KAAQ,MAAc,MAAa;AACjC,WAAO,KAAK,KAAK,KAAQ,GAAG,KAAK,OAAO,GAAG,IAAI,IAAI,IAAI;EACzD;EAEA,IAAO,MAAc,MAAa;AAChC,WAAO,KAAK,KAAK,IAAO,GAAG,KAAK,OAAO,GAAG,IAAI,IAAI,IAAI;EACxD;EAEA,OAAU,MAAY;AACpB,WAAO,KAAK,KAAK,OAAU,GAAG,KAAK,OAAO,GAAG,IAAI,EAAE;EACrD;;qCAnBW,aAAU;EAAA;4EAAV,aAAU,SAAV,YAAU,WAAA,YADG,OAAM,CAAA;;",
-  "names": []
-}

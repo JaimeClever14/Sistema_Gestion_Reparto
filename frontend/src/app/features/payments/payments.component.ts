@@ -86,31 +86,40 @@ export class PaymentsComponent implements OnInit {
     this.loading = true;
 
     this.api.get<Pago[]>('/pagos').subscribe({
-      next: (pgs) => (this.pagos = pgs),
-      error: () => this.cargarDemo()
+      next: (pgs) => {
+        this.pagos = pgs && pgs.length > 0 ? pgs : this.demoPagos();
+        this.loading = false;
+      },
+      error: () => {
+        this.cargarDemo();
+        this.loading = false;
+      }
     });
 
     this.api.get<Credito[]>('/creditos').subscribe({
-      next: (creds) => (this.creditos = creds),
-      error: () => {}
+      next: (creds) => {
+        if (creds && creds.length > 0) this.creditos = creds;
+      }
     });
 
     this.api.get<MetodoPago[]>('/metodos-pago').subscribe({
-      next: (mps) => (this.metodosPago = mps),
+      next: (mps) => {
+        if (mps && mps.length > 0) this.metodosPago = mps;
+      },
       error: () => {
         this.metodosPago = [
-          { idMetodoPago: 1, nombreMetodo: 'Efectivo / Cash' },
-          { idMetodoPago: 2, nombreMetodo: 'Yape / Plin (QR)' },
-          { idMetodoPago: 3, nombreMetodo: 'Transferencia Bancaria' },
-          { idMetodoPago: 4, nombreMetodo: 'Tarjeta Débito / Crédito' }
+          { idMetodoPago: 1, nombre: 'Efectivo / Cash' },
+          { idMetodoPago: 2, nombre: 'Yape / Plin (QR)' },
+          { idMetodoPago: 3, nombre: 'Transferencia Bancaria' },
+          { idMetodoPago: 4, nombre: 'Tarjeta Débito / Crédito' }
         ];
       }
     });
 
     this.api.get<Pedido[]>('/pedidos').subscribe({
-      next: (peds) => (this.pedidos = peds),
-      error: () => {},
-      complete: () => (this.loading = false)
+      next: (peds) => {
+        this.pedidos = peds || [];
+      }
     });
   }
 
@@ -169,8 +178,8 @@ export class PaymentsComponent implements OnInit {
 
   // ─── Datos demo ────────────────────────────────────────────────
 
-  private cargarDemo(): void {
-    this.pagos = [
+  private demoPagos(): Pago[] {
+    return [
       {
         idPago: 1,
         idPedido: 101,
@@ -178,7 +187,7 @@ export class PaymentsComponent implements OnInit {
         fechaPago: '2026-08-09T14:35:00',
         numeroOperacion: 'YAPE-948123',
         estado: 'A',
-        metodoPago: { idMetodoPago: 2, nombreMetodo: 'Yape / Plin (QR)' }
+        metodoPago: { idMetodoPago: 2, nombre: 'Yape / Plin (QR)' }
       },
       {
         idPago: 2,
@@ -187,18 +196,13 @@ export class PaymentsComponent implements OnInit {
         fechaPago: '2026-08-09T16:15:00',
         numeroOperacion: 'EFEC-001',
         estado: 'A',
-        metodoPago: { idMetodoPago: 1, nombreMetodo: 'Efectivo / Cash' }
-      },
-      {
-        idPago: 3,
-        idPedido: 103,
-        montoPago: 520.00,
-        fechaPago: '2026-08-10T09:05:00',
-        numeroOperacion: 'TRF-BCP-2026001',
-        estado: 'A',
-        metodoPago: { idMetodoPago: 3, nombreMetodo: 'Transferencia Bancaria' }
+        metodoPago: { idMetodoPago: 1, nombre: 'Efectivo / Cash' }
       }
     ];
+  }
+
+  private cargarDemo(): void {
+    this.pagos = this.demoPagos();
 
     this.creditos = [
       {

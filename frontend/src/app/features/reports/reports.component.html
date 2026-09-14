@@ -1,0 +1,312 @@
+<div class="reports-container">
+  <!-- ENCABEZADO VENDEDOR / ADMIN — ROMASTORE -->
+  <div class="reports-header no-print">
+    <div>
+      <h1 class="page-title">📈 Centro de Informes &amp; Reportes de Ventas</h1>
+      <p class="page-subtitle">Análisis detallado de ventas por día, semana, cliente y vendedor en Licorería Roma.</p>
+    </div>
+
+    <div class="header-actions">
+      <button type="button" class="btn-print" (click)="imprimirInforme()">
+        🖨️ Imprimir / Guardar PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- TARJETAS DE INDICADORES GLOBALES (KPI) -->
+  <div class="kpi-grid no-print">
+    <div class="kpi-card gold">
+      <div class="kpi-icon">💰</div>
+      <div>
+        <span class="kpi-label">Ventas Totales</span>
+        <div class="kpi-value">S/ {{ totalGeneralMonto | number:'1.2-2' }}</div>
+        <small class="kpi-sub">{{ totalGeneralPedidos }} pedidos procesados</small>
+      </div>
+    </div>
+
+    <div class="kpi-card blue">
+      <div class="kpi-icon">📊</div>
+      <div>
+        <span class="kpi-label">Ticket Promedio</span>
+        <div class="kpi-value">S/ {{ ticketPromedioGeneral | number:'1.2-2' }}</div>
+        <small class="kpi-sub">promedio por orden de compra</small>
+      </div>
+    </div>
+
+    <div class="kpi-card green">
+      <div class="kpi-icon">🗓️</div>
+      <div>
+        <span class="kpi-label">Ventas de Esta Semana</span>
+        <div class="kpi-value">S/ {{ ventasSemanaActual | number:'1.2-2' }}</div>
+        <small class="kpi-sub">{{ cantidadSemanaActual }} órdenes esta semana</small>
+      </div>
+    </div>
+
+    <div class="kpi-card purple">
+      <div class="kpi-icon">👥</div>
+      <div>
+        <span class="kpi-label">Clientes Atendidos</span>
+        <div class="kpi-value">{{ reporteClientes.length }}</div>
+        <small class="kpi-sub">compradores activos</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- SELECCIÓN DE PESTAÑAS / TIPOS DE INFORME -->
+  <nav class="report-nav-pills no-print">
+    <button type="button" class="rp-pill" [class.active]="activeTab==='dia'" (click)="activeTab='dia'">
+      📅 1. Informe Por Día
+    </button>
+    <button type="button" class="rp-pill" [class.active]="activeTab==='semana'" (click)="activeTab='semana'">
+      🗓️ 2. Informe Por Semana
+    </button>
+    <button type="button" class="rp-pill" [class.active]="activeTab==='cliente'" (click)="activeTab='cliente'">
+      👤 3. Informe Por Cliente
+    </button>
+    <button type="button" class="rp-pill" [class.active]="activeTab==='vendedor'" (click)="activeTab='vendedor'">
+      🛒 4. Informe Por Vendedor
+    </button>
+  </nav>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: INFORME POR DÍA -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab==='dia'" class="report-card">
+    <div class="report-card-head">
+      <div>
+        <h2>📅 Informe de Ventas por Día</h2>
+        <p>Selecciona la fecha para auditar el flujo de ingresos del día.</p>
+      </div>
+
+      <div class="date-picker-box no-print">
+        <label>Seleccionar Fecha:</label>
+        <input type="date" [(ngModel)]="fechaSeleccionada" class="inp-date">
+      </div>
+    </div>
+
+    <!-- TARJETAS DEL DÍA -->
+    <div class="day-summary-row">
+      <div class="day-box">
+        <span>Ventas Netas del Día</span>
+        <strong>S/ {{ montoDia | number:'1.2-2' }}</strong>
+      </div>
+      <div class="day-box">
+        <span>Base Imponible (Subtotal)</span>
+        <strong>S/ {{ subtotalDia | number:'1.2-2' }}</strong>
+      </div>
+      <div class="day-box">
+        <span>IGV (18%)</span>
+        <strong>S/ {{ igvDia | number:'1.2-2' }}</strong>
+      </div>
+      <div class="day-box highlight">
+        <span>Órdenes Emitidas</span>
+        <strong>{{ pedidosDia.length }} pedidos</strong>
+      </div>
+    </div>
+
+    <!-- GRÁFICO DE BARRAS DE ÚLTIMOS 7 DÍAS -->
+    <div class="chart-box no-print">
+      <h3>📊 Comparativo de Ventas de los Últimos 7 Días</h3>
+      <div class="bars-wrapper">
+        <div *ngFor="let dia of ultimos7Dias" class="bar-col">
+          <div class="bar-val-txt">S/ {{ dia.totalMonto | number:'1.0-0' }}</div>
+          <div class="bar-track">
+            <div class="bar-fill" [style.height.%]="(dia.totalMonto / maxMontoSieteDias) * 100"></div>
+          </div>
+          <div class="bar-label">
+            <strong>{{ dia.diaNombre }}</strong>
+            <small>{{ dia.fechaStr | date:'dd/MM' }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABLA DE VENTAS DEL DÍA SELECCIONADO -->
+    <h3 style="margin-top: 24px; font-size: 1.1rem; color: #1e293b;">📋 Ventas Registradas el {{ fechaSeleccionada | date:'dd/MM/yyyy' }}</h3>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Código</th>
+          <th>Hora</th>
+          <th>Cliente</th>
+          <th>Dirección</th>
+          <th>Total</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of pedidosDia">
+          <td><strong class="code-txt">{{ p.codigoPedido || '#' + p.idPedido }}</strong></td>
+          <td>{{ p.fechaPedido | date:'HH:mm:ss' }}</td>
+          <td><strong>{{ getClienteNombre(p.cliente) }}</strong></td>
+          <td>{{ p.direccionEntrega || p.cliente?.direccionPrincipal || 'S/N' }}</td>
+          <td><strong class="gold-price">S/ {{ (p.total || p.montoTotal || 0) | number:'1.2-2' }}</strong></td>
+          <td><span class="status-tag active">✅ Emitido</span></td>
+        </tr>
+        <tr *ngIf="pedidosDia.length === 0">
+          <td colspan="6" class="txt-center">No hay registros de ventas para la fecha seleccionada.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: INFORME POR SEMANA -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab==='semana'" class="report-card">
+    <div class="report-card-head">
+      <div>
+        <h2>🗓️ Informe de Ventas por Semana</h2>
+        <p>Rendimiento semanal consolidado de Licorería Roma.</p>
+      </div>
+    </div>
+
+    <div class="day-summary-row">
+      <div class="day-box gold">
+        <span>Ventas Esta Semana</span>
+        <strong>S/ {{ ventasSemanaActual | number:'1.2-2' }}</strong>
+      </div>
+      <div class="day-box">
+        <span>Órdenes Concluidas</span>
+        <strong>{{ cantidadSemanaActual }} ventas</strong>
+      </div>
+      <div class="day-box">
+        <span>Promedio Diario (Semana)</span>
+        <strong>S/ {{ (ventasSemanaActual / 7) | number:'1.2-2' }}</strong>
+      </div>
+    </div>
+
+    <div class="chart-box">
+      <h3>📈 Distribución Diaria de Ventas de la Semana</h3>
+      <div class="bars-wrapper">
+        <div *ngFor="let dia of ultimos7Dias" class="bar-col">
+          <div class="bar-val-txt">S/ {{ dia.totalMonto | number:'1.0-0' }}</div>
+          <div class="bar-track">
+            <div class="bar-fill gold" [style.height.%]="(dia.totalMonto / maxMontoSieteDias) * 100"></div>
+          </div>
+          <div class="bar-label">
+            <strong>{{ dia.diaNombre }}</strong>
+            <small>{{ dia.cantidadPedidos }} ventas</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: INFORME POR CLIENTE -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab==='cliente'" class="report-card">
+    <div class="report-card-head">
+      <div>
+        <h2>👥 Ranking e Informe de Ventas por Cliente</h2>
+        <p>Consolidado acumulado de ventas agrupadas por cliente comercial.</p>
+      </div>
+
+      <div class="vp-search-inline no-print">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="searchCliente" placeholder="Buscar cliente por nombre o documento..." class="inp-search">
+      </div>
+    </div>
+
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th># Rank</th>
+          <th>Cliente Comercial</th>
+          <th>N° Documento (RUC/DNI)</th>
+          <th>N° Pedidos</th>
+          <th>Ticket Promedio</th>
+          <th>Total Acumulado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let c of reporteClientes; let i = index">
+          <td><span class="rank-badge" [class.top3]="i < 3">#{{ i + 1 }}</span></td>
+          <td><strong>{{ c.nombreCliente }}</strong></td>
+          <td><code>{{ c.documento }}</code></td>
+          <td>{{ c.cantidadPedidos }} pedidos</td>
+          <td>S/ {{ c.ticketPromedio | number:'1.2-2' }}</td>
+          <td><strong class="gold-price" style="font-size: 1rem;">S/ {{ c.totalCompras | number:'1.2-2' }}</strong></td>
+        </tr>
+        <tr *ngIf="reporteClientes.length === 0">
+          <td colspan="6" class="txt-center">No hay datos de clientes registrados para mostrar.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 4: INFORME POR VENDEDOR -->
+  <!-- ════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab==='vendedor'" class="report-card">
+    <div class="report-card-head">
+      <div>
+        <h2>🛒 Rendimiento de Ventas por Vendedor</h2>
+        <p>Métricas de efectividad por cada vendedor o canal de ventas.</p>
+      </div>
+
+      <div class="vp-search-inline no-print">
+        <span>🔍</span>
+        <input type="text" [(ngModel)]="searchVendedor" placeholder="Buscar por vendedor..." class="inp-search">
+      </div>
+    </div>
+
+    <div class="vendor-grid">
+      <div *ngFor="let v of reporteVendedores" class="vendor-card">
+        <div class="vendor-head">
+          <div class="v-avatar">{{ v.nombreVendedor[0].toUpperCase() }}</div>
+          <div>
+            <h3>{{ v.nombreVendedor }}</h3>
+            <span class="v-tag">🛒 Vendedor Registrado</span>
+          </div>
+        </div>
+
+        <div class="vendor-stats-list">
+          <div class="v-stat-line">
+            <span>Total Recaudado:</span>
+            <strong class="gold-price">S/ {{ v.totalVentas | number:'1.2-2' }}</strong>
+          </div>
+          <div class="v-stat-line">
+            <span>Pedidos Atendidos:</span>
+            <strong>{{ v.cantidadPedidos }} órdenes</strong>
+          </div>
+          <div class="v-stat-line">
+            <span>Ticket Promedio:</span>
+            <strong>S/ {{ v.ticketPromedio | number:'1.2-2' }}</strong>
+          </div>
+          <div class="v-stat-line">
+            <span>Cuota de Ventas:</span>
+            <strong>{{ v.porcentajeTotal }}% del total</strong>
+          </div>
+        </div>
+
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" [style.width.%]="v.porcentajeTotal"></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin-top: 24px; font-size: 1.1rem; color: #1e293b;">📋 Tabla Consolidada por Vendedor</h3>
+    <table class="report-table">
+      <thead>
+        <tr>
+          <th>Vendedor / Canal</th>
+          <th>N° Ventas</th>
+          <th>Ticket Promedio</th>
+          <th>% Participación</th>
+          <th>Monto Recaudado Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of reporteVendedores">
+          <td><strong>{{ v.nombreVendedor }}</strong></td>
+          <td>{{ v.cantidadPedidos }} pedidos</td>
+          <td>S/ {{ v.ticketPromedio | number:'1.2-2' }}</td>
+          <td>{{ v.porcentajeTotal }}%</td>
+          <td><strong class="gold-price">S/ {{ v.totalVentas | number:'1.2-2' }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>

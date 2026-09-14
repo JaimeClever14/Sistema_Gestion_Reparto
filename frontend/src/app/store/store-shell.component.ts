@@ -1,11 +1,12 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../core/auth.service';
 import { CartService } from '../core/cart.service';
 import { ApiService } from '../core/api.service';
-import { Pedido } from '../core/models';
+import { NotificationService } from '../core/notification.service';
+import { Pedido, Categoria } from '../core/models';
 
 @Component({
   selector: 'app-store-shell',
@@ -14,25 +15,55 @@ import { Pedido } from '../core/models';
   templateUrl: './store-shell.component.html',
   styleUrl: './store-shell.component.css'
 })
-export class StoreShellComponent {
+export class StoreShellComponent implements OnInit {
   readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   readonly cartService = inject(CartService);
   private readonly api = inject(ApiService);
+  readonly notifService = inject(NotificationService);
 
   searchTerm = '';
   showUserMenu = false;
   showCartPanel = false;
+  showNotifMenu = false;
   processingCheckout = false;
   orderSuccessMessage = '';
 
-  readonly categories = [
-    'Licores & Destilados',
-    'Cervezas',
-    'Vinos',
-    'Bebidas Sin Alcohol',
-    'Ofertas'
-  ];
+  // ANIMACIÓN CAMIÓN DEDICADA
+  showTruckAnimation = false;
+  truckStage: 'speeding' | 'arrived' | 'confirmed' = 'speeding';
+  createdOrderCode = '';
+  createdOrderTotal = 0;
+
+  categoriesList: Categoria[] = [];
+
+  ngOnInit(): void {
+    this.cargarCategorias();
+  }
+
+  cargarCategorias(): void {
+    this.api.get<Categoria[]>('/categorias').subscribe({
+      next: (cats) => {
+        this.categoriesList = (cats && cats.length > 0) ? cats : this.demoCategorias();
+      },
+      error: () => {
+        this.categoriesList = this.demoCategorias();
+      }
+    });
+  }
+
+  getNombreCat(cat: Categoria): string {
+    return cat.nombre || cat.nombreCategoria || 'Categoría';
+  }
+
+  private demoCategorias(): Categoria[] {
+    return [
+      { idCategoria: 1, nombre: 'Licores & Destilados' },
+      { idCategoria: 2, nombre: 'Cervezas' },
+      { idCategoria: 3, nombre: 'Vinos' },
+      { idCategoria: 4, nombre: 'Bebidas Sin Alcohol' }
+    ];
+  }
 
   get isDemoMode(): boolean {
     return this.authService.isDemoMode();
@@ -48,6 +79,21 @@ export class StoreShellComponent {
 
   toggleUserMenu(): void {
     this.showUserMenu = !this.showUserMenu;
+    this.showNotifMenu = false;
+  }
+
+  toggleNotifMenu(): void {
+    this.showNotifMenu = !this.showNotifMenu;
+    this.showUserMenu = false;
+    if (this.showNotifMenu) {
+      this.notifService.markAllAsRead('CLIENTE');
+    }
+  }
+
+  onSelectNotification(n: any): void {
+    this.showNotifMenu = false;
+    this.notifService.markAsRead(n.id);
+    this.router.navigate(['/store/orders']);
   }
 
   toggleCartPanel(): void {
@@ -64,65 +110,111 @@ export class StoreShellComponent {
     const igv = this.cartService.igv();
     const orderCode = `PED-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
-    const nuevoPedido: Pedido = {
-      idPedido: Date.now(),
+    this.createdOrderCode = orderCode;
+    this.createdOrderTotal = total;
+
+    const payload: any = {
       codigoPedido: orderCode,
       idCliente: 1,
-      cliente: {
-        idCliente: 1,
-        nombresRazónSocial: currentUsername,
-        numeroDocumento: '72345678'
-      },
+      idUsuario: 1,
+      idEstado: 1,
+      idTipoEntrega: 1,
+      subtotal: Number(subtotal.toFixed(2)),
+      igv: Number(igv.toFixed(2)),
+      total: Number(total.toFixed(2)),
       montoSubtotal: Number(subtotal.toFixed(2)),
       montoIgv: Number(igv.toFixed(2)),
       montoTotal: Number(total.toFixed(2)),
-      direccionEntrega: 'Entrega a Domicilio - Roma Express',
+      direccionEntrega: localStorage.getItem('roma_user_address') || 'Av. Larco 456, Miraflores - Roma Express',
       observaciones: 'Pedido generado desde la tienda online',
-      fechaPedido: new Date().toISOString(),
-      estado: 'A',
+      estado: 'P',
       detalles: this.cartService.cartItems().map(item => ({
         idProducto: item.producto.idProducto,
         cantidad: item.cantidad,
         precioUnitario: item.precioUnitario,
-        subtotal: item.subtotal,
-        producto: item.producto
+        subtotal: item.subtotal
       }))
     };
 
-    // Guardar en shared storage para sincronización inmediata con el panel de administración
-    this.saveToSharedOrders(nuevoPedido);
+    // 🚀 DISPARAR NOTIFICACIÓN PARA EL ADMIN Y VENDEDOR 🚀
+    this.notifService.notify(
+      'ADMIN',
+      '🛒 ¡Nuevo Pedido Recibido!',
+      `El cliente ${currentUsername} realizó la compra #${orderCode} por un total de S/ ${total.toFixed(2)}.`,
+      orderCode,
+      'info'
+    );
 
-    // Enviar también al backend
-    this.api.post<Pedido>('/pedidos', nuevoPedido).subscribe({
+    // 🚀 DESPARAR ANIMACIÓN CAMIÓN A TODA VELOCIDAD 🚀
+    this.showCartPanel = false;
+    this.showTruckAnimation = true;
+    this.truckStage = 'speeding';
+
+    this.api.post<Pedido>('/pedidos', payload).subscribe({
       next: (res) => {
-        if (res && res.idPedido) {
-          nuevoPedido.idPedido = res.idPedido;
-          this.saveToSharedOrders(nuevoPedido);
-        }
-        this.finishCheckout(orderCode);
+        const fullOrder: Pedido = {
+          ...payload,
+          ...res,
+          cliente: { idCliente: 1, nombresRazonSocial: currentUsername },
+          detalles: this.cartService.cartItems().map(item => ({
+            idProducto: item.producto.idProducto,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            subtotal: item.subtotal,
+            producto: item.producto
+          }))
+        };
+        this.saveToSharedOrders(fullOrder);
+        this.triggerTruckSequence();
       },
       error: () => {
-        this.finishCheckout(orderCode);
+        const fullOrder: Pedido = {
+          idPedido: Date.now(),
+          ...payload,
+          cliente: { idCliente: 1, nombresRazonSocial: currentUsername },
+          detalles: this.cartService.cartItems().map(item => ({
+            idProducto: item.producto.idProducto,
+            cantidad: item.cantidad,
+            precioUnitario: item.precioUnitario,
+            subtotal: item.subtotal,
+            producto: item.producto
+          }))
+        };
+        this.saveToSharedOrders(fullOrder);
+        this.triggerTruckSequence();
       }
     });
   }
 
-  private finishCheckout(orderCode: string): void {
-    this.processingCheckout = false;
-    this.showCartPanel = false;
-    this.cartService.clearCart();
-    this.orderSuccessMessage = `¡Pedido #${orderCode} generado con éxito! Puedes ver el seguimiento en tu panel.`;
-    alert(`🎉 ¡Pedido generado con éxito!\nCódigo de Pedido: ${orderCode}\nTotal: S/ ${this.cartService.totalMonto().toFixed(2)}\nEl administrador ya puede verlo en el panel de pedidos.`);
+  private triggerTruckSequence(): void {
+    setTimeout(() => {
+      this.truckStage = 'arrived';
+    }, 2500);
+
+    setTimeout(() => {
+      this.truckStage = 'confirmed';
+      this.cartService.clearCart();
+      this.processingCheckout = false;
+    }, 3500);
+  }
+
+  closeTruckAnimation(): void {
+    this.showTruckAnimation = false;
+    this.truckStage = 'speeding';
+  }
+
+  goToOrders(): void {
+    this.closeTruckAnimation();
+    this.router.navigate(['/store/orders']);
   }
 
   private saveToSharedOrders(order: Pedido): void {
     try {
-      const existing = localStorage.getItem('roma_shared_orders');
+      const existing = localStorage.getItem('roma_shared_orders_DISABLED');
       let orders: Pedido[] = existing ? JSON.parse(existing) : [];
-      // Reemplazar o insertar al inicio
       orders = orders.filter(o => o.codigoPedido !== order.codigoPedido && o.idPedido !== order.idPedido);
       orders.unshift(order);
-      localStorage.setItem('roma_shared_orders', JSON.stringify(orders));
+      localStorage.setItem('roma_shared_orders_DISABLED', JSON.stringify(orders));
     } catch (e) {
       console.warn('Error saving shared order', e);
     }

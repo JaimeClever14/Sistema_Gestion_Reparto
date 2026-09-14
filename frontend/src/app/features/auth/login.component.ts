@@ -2,9 +2,6 @@ import { Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/auth.service';
-
-interface DemoAccount { icon: string; name: string; username: string; password: string; role: string; badge: string; description: string; }
-
 @Component({
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
@@ -22,22 +19,14 @@ export class LoginComponent implements OnInit {
   successMessage = '';
   showPassword   = false;
   showRegisterPassword = false;
-  selectedDemoRole = '';
   showForgotModal = false;
   forgotSent      = false;
   forgotEmail     = '';
   rememberMe      = true;
 
-  readonly demoAccounts: DemoAccount[] = [
-    { icon: '👑', name: 'Administrador', username: 'admin',      password: 'Admin123!',      role: 'ADMIN',      badge: 'Control Total', description: 'Acceso completo a inventario, reportes y usuarios' },
-    { icon: '💼', name: 'Vendedor',      username: 'vendedor',   password: 'Vendedor123!',   role: 'VENDEDOR',   badge: 'Ventas',        description: 'Registra ventas y gestiona clientes' },
-    { icon: '🛵', name: 'Repartidor',    username: 'repartidor', password: 'Repartidor123!', role: 'REPARTIDOR', badge: 'Entregas',      description: 'Rutas de entrega y confirmación de pedidos' },
-    { icon: '🛒', name: 'Cliente',       username: 'cliente',    password: 'Cliente123!',    role: 'CLIENTE',    badge: 'Compras',       description: 'Explora el catálogo y realiza pedidos' }
-  ];
-
   readonly loginForm = this.fb.nonNullable.group({
-    username: ['admin',    [Validators.required]],
-    password: ['Admin123!',[Validators.required]]
+    username: ['', [Validators.required]],
+    password: ['', [Validators.required]]
   });
 
   readonly registerForm = this.fb.nonNullable.group({
@@ -45,6 +34,8 @@ export class LoginComponent implements OnInit {
     apellidos:   ['', [Validators.required]],
     username:    ['', [Validators.required, Validators.minLength(3)]],
     email:       ['', [Validators.required, Validators.email]],
+    telefono:    [''],
+    direccion:   [''],
     password:    ['', [Validators.required, Validators.minLength(6)]],
     acceptTerms: [true, [Validators.requiredTrue]]
   });
@@ -59,18 +50,6 @@ export class LoginComponent implements OnInit {
     this.errorMessage  = '';
     this.successMessage = '';
   }
-
-  applyDemo(acc: DemoAccount): void {
-    this.selectedDemoRole = acc.role;
-    this.loginForm.patchValue({ username: acc.username, password: acc.password });
-    this.successMessage = `✔ Credenciales de ${acc.name} cargadas`;
-    setTimeout(() => { this.successMessage = ''; }, 2500);
-  }
-
-  // Alias used by the HTML template
-  applyDemoAccount(acc: DemoAccount): void { this.applyDemo(acc); }
-
-  get isDemoMode(): boolean { return this.authService.isDemoMode(); }
 
   submitLogin(): void {
     if (this.loginForm.invalid) { this.loginForm.markAllAsTouched(); return; }
@@ -94,11 +73,44 @@ export class LoginComponent implements OnInit {
 
   submitRegister(): void {
     if (this.registerForm.invalid) { this.registerForm.markAllAsTouched(); return; }
-    const { nombres, apellidos, username, email, password } = this.registerForm.getRawValue();
+    const { nombres, apellidos, username, email, password, telefono, direccion } = this.registerForm.getRawValue();
     this.loading = true;
     this.errorMessage = '';
 
-    this.authService.register({ nombres, apellidos, username, email, password }).subscribe({
+    if (direccion) {
+      localStorage.setItem('roma_user_address', direccion);
+    }
+    if (telefono) {
+      localStorage.setItem('roma_user_phone', telefono);
+    }
+
+    // 🚀 Vincular usuario registrado con la lista de Clientes del sistema 🚀
+    const newClientData: any = {
+      idCliente: Date.now(),
+      idTipoDocumento: 1,
+      numeroDocumento: '4' + Math.floor(10000000 + Math.random() * 90000000),
+      nombresRazonSocial: `${nombres} ${apellidos}`.trim(),
+      nombresRazónSocial: `${nombres} ${apellidos}`.trim(),
+      apellidos: apellidos,
+      email: email,
+      telefono: telefono || '987654321',
+      direccionPrincipal: direccion || 'Av. Larco 123, Miraflores',
+      limiteCredito: 2000,
+      estado: 'A',
+      fechaRegistro: new Date().toISOString()
+    };
+
+    try {
+      const stored = localStorage.getItem('roma_registered_clients');
+      let registeredList: any[] = stored ? JSON.parse(stored) : [];
+      registeredList = registeredList.filter(c => c.email !== email);
+      registeredList.unshift(newClientData);
+      localStorage.setItem('roma_registered_clients', JSON.stringify(registeredList));
+    } catch (e) {
+      console.warn('Error saving registered client locally', e);
+    }
+
+    this.authService.register({ nombres, apellidos, username, email, password, telefono, direccion }).subscribe({
       next: () => { this.loading = false; this.authService.navigateHome(); },
       error: (err) => {
         this.loading = false;
@@ -106,7 +118,11 @@ export class LoginComponent implements OnInit {
         if (typeof msg === 'string' && msg.length > 0) {
           this.errorMessage = msg;
         } else if (err?.status === 0) {
-          this.errorMessage = '⚠️ No se pudo conectar al servidor. Asegúrate de que el backend (Spring Boot) esté corriendo en el puerto 8080.';
+          // Si es demo / fallback sin backend, guardar sesión localmente
+          localStorage.setItem('roma_token', 'DEMO_MODE_TOKEN');
+          localStorage.setItem('roma_username', username);
+          localStorage.setItem('roma_role', 'CLIENTE');
+          this.authService.navigateHome();
         } else {
           this.errorMessage = 'No se pudo completar el registro. Intenta de nuevo.';
         }

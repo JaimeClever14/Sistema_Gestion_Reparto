@@ -3,8 +3,8 @@
   <header class="meli-header">
     <div class="header-inner">
       <!-- Logo -->
-      <a routerLink="/store/catalog" class="logo">
-        <div class="logo-mark">R</div>
+      <a routerLink="/store/catalog" class="logo" style="display: flex; align-items: center; gap: 8px;">
+        <img src="assets/logo.png" alt="Licorería Roma" style="width: 38px; height: 38px; border-radius: 50%; border: 1.5px solid #0f172a; object-fit: cover;">
         <span class="logo-text">Roma<strong>Store</strong></span>
       </a>
 
@@ -32,6 +32,34 @@
       <div class="header-actions">
         <div class="demo-tag" *ngIf="isDemoMode">⚡ Demo</div>
 
+        <!-- Campana Notificaciones -->
+        <div class="notif-wrapper">
+          <button type="button" class="notif-bell-btn" (click)="toggleNotifMenu()" title="Notificaciones">
+            🔔
+            <span class="notif-badge" *ngIf="notifService.getUnreadCount('CLIENTE') > 0">
+              {{ notifService.getUnreadCount('CLIENTE') }}
+            </span>
+          </button>
+
+          <!-- Dropdown Notificaciones -->
+          <div class="notif-dropdown" *ngIf="showNotifMenu" (click)="$event.stopPropagation()">
+            <div class="notif-header">
+              <strong>🔔 Notificaciones</strong>
+              <button (click)="notifService.clearNotifications('CLIENTE')" class="btn-clear-notif">Limpiar</button>
+            </div>
+            <div class="notif-list">
+              <div class="notif-item clickable" *ngFor="let n of notifService.getNotificationsForRole('CLIENTE')" [class.unread]="!n.read" (click)="onSelectNotification(n)">
+                <strong class="notif-title">{{ n.title }}</strong>
+                <p class="notif-msg">{{ n.message }}</p>
+                <small class="notif-time">{{ n.timestamp | date:'dd/MM HH:mm' }}</small>
+              </div>
+              <div class="notif-empty" *ngIf="notifService.getNotificationsForRole('CLIENTE').length === 0">
+                <span>🔕</span> Sin notificaciones nuevas
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="user-area" (click)="toggleUserMenu()">
           <div class="user-avatar">{{ authService.getUsername().slice(0, 1).toUpperCase() }}</div>
           <div class="user-details">
@@ -41,7 +69,7 @@
 
           <!-- Dropdown -->
           <div class="user-dropdown" *ngIf="showUserMenu" (click)="$event.stopPropagation()">
-            <a routerLink="/store/catalog" class="dropdown-item">🛒 Mis compras</a>
+            <a routerLink="/store/orders" class="dropdown-item">📦 Mis compras / Pedidos</a>
             <a routerLink="/store/catalog" class="dropdown-item">❤️ Favoritos</a>
             <hr class="dropdown-divider">
             <button type="button" class="dropdown-item logout" (click)="logout()">🚪 Cerrar sesión</button>
@@ -113,19 +141,21 @@
           <span>S/ {{ cartService.totalMonto() | number:'1.2-2' }}</span>
         </div>
       </div>
-      <button class="btn-primary-meli btn-checkout" (click)="checkout()">Finalizar Compra</button>
+      <button class="btn-primary-meli btn-checkout" (click)="checkout()">🚀 Finalizar Compra</button>
     </div>
   </div>
 
   <!-- ═══ NAVBAR SECUNDARIA — CATEGORÍAS ═══ -->
   <nav class="meli-nav">
     <div class="nav-inner">
-      <a *ngFor="let cat of categories"
+      <a routerLink="/store/catalog" class="nav-link">Todas las categorías</a>
+      <a *ngFor="let cat of categoriesList"
          routerLink="/store/catalog"
-         [queryParams]="{category: cat}"
+         [queryParams]="{ categoryId: cat.idCategoria }"
          class="nav-link">
-        {{ cat }}
+        {{ getNombreCat(cat) }}
       </a>
+      <a routerLink="/store/orders" class="nav-link highlight-orders">📦 Mis Pedidos</a>
     </div>
   </nav>
 
@@ -143,13 +173,13 @@
       </div>
       <div class="footer-col">
         <h4>Mi cuenta</h4>
-        <a routerLink="/store/catalog">Mis compras</a>
+        <a routerLink="/store/orders">Mis compras</a>
         <a routerLink="/store/catalog">Favoritos</a>
-        <a routerLink="/store/catalog">Historial</a>
+        <a routerLink="/store/orders">Historial</a>
       </div>
       <div class="footer-col">
         <h4>Categorías</h4>
-        <a *ngFor="let cat of categories" routerLink="/store/catalog">{{ cat }}</a>
+        <a *ngFor="let cat of categoriesList" routerLink="/store/catalog" [queryParams]="{ categoryId: cat.idCategoria }">{{ getNombreCat(cat) }}</a>
       </div>
       <div class="footer-col">
         <h4>Atención al cliente</h4>
@@ -162,4 +192,87 @@
       <p>&copy; 2026 RomaStore — Todos los derechos reservados. Powered by RomaPedidos.</p>
     </div>
   </footer>
+</div>
+
+<!-- ═══ ANIMACIÓN CAMIÓN A TODA VELOCIDAD AL COMPRAR ═══ -->
+<div class="truck-overlay" *ngIf="showTruckAnimation">
+  
+  <div class="truck-scene" *ngIf="truckStage === 'speeding' || truckStage === 'arrived'">
+    
+    <!-- Líneas de velocidad -->
+    <div class="speed-lines">
+      <span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Pista / Carretera nocturna -->
+    <div class="road-track">
+      <div class="road-lines"></div>
+    </div>
+
+    <!-- El camión a toda velocidad con humo y luces -->
+    <div class="speed-truck-wrapper" [class.arrived]="truckStage === 'arrived'">
+      <div class="smoke-particles">
+        <span class="smoke p1">💨</span>
+        <span class="smoke p2">💨</span>
+        <span class="smoke p3">💨</span>
+        <span class="fire-spark">⚡</span>
+      </div>
+
+      <div class="truck-body-box">
+        <div class="truck-cab">
+          <div class="truck-window"></div>
+          <div class="headlight-beam"></div>
+        </div>
+        <div class="truck-trailer">
+          <div class="trailer-logo">RomaExpress</div>
+          <div class="speed-tag">🚀 45 MIN</div>
+        </div>
+        <div class="truck-wheel wheel-back">⚙️</div>
+        <div class="truck-wheel wheel-front">⚙️</div>
+      </div>
+    </div>
+
+    <!-- Cartel de Progreso y Mensaje -->
+    <div class="truck-status-card">
+      <div class="status-badge-animated">
+        <span class="pulse-dot"></span>
+        <span>{{ truckStage === 'speeding' ? '¡DESPACHANDO TU PEDIDO A TODA VELOCIDAD!' : '¡CAMIÓN EN CAMINO!' }}</span>
+      </div>
+      <h2 class="order-code-glow">Código de Pedido: {{ createdOrderCode }}</h2>
+      <p class="speed-sub">Tu entrega ha sido enviada al repartidor más cercano a tu ubicación.</p>
+      
+      <div class="speed-progress-bar">
+        <div class="progress-fill" [class.full]="truckStage === 'arrived'"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TARJETA FINAL DE CONFIRMACIÓN DE PEDIDO -->
+  <div class="order-success-modal" *ngIf="truckStage === 'confirmed'">
+    <div class="modal-success-icon">🎉</div>
+    <h2>¡Gracias por tu compra en RomaStore!</h2>
+    <p class="success-subtitle">Tu pedido fue procesado exitosamente y ya está en camino a tu domicilio.</p>
+
+    <div class="order-summary-box">
+      <div class="summary-row">
+        <span>Código de Pedido:</span>
+        <strong>{{ createdOrderCode }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Monto Total:</span>
+        <strong class="total-price">S/ {{ createdOrderTotal | number:'1.2-2' }}</strong>
+      </div>
+      <div class="summary-row">
+        <span>Tiempo Estimado de Entrega:</span>
+        <span class="delivery-badge">⚡ 25 - 40 minutos</span>
+      </div>
+    </div>
+
+    <div class="success-actions">
+      <button type="button" class="btn-primary-meli" (click)="goToOrders()">🛍️ Continuar Comprando</button>
+      <button type="button" class="btn-secondary-meli" (click)="closeTruckAnimation()">✕ Cerrar</button>
+    </div>
+  </div>
+
 </div>

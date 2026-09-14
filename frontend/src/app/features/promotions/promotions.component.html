@@ -1,120 +1,205 @@
-<section class="grid-head">
-  <div>
-    <p class="eyebrow">Marketing y Ventas</p>
-    <h1>Gestión de Promociones</h1>
-    <p class="muted">Crea y administra descuentos, cupones y ofertas especiales para los clientes.</p>
-  </div>
+<div class="catalog-promotions-container" style="padding: 15px; background-color: #f1f5f9; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-  <div class="actions">
-    <button type="button" class="btn-primary" (click)="openNewModal()">
-      ✨ + Nueva Promoción
+  <!-- TABS / PILLS HEADER (ESTILO FIEL A LA CAPTURA DE REFERENCIA) -->
+  <div class="top-pills-nav" style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button type="button" class="pill-btn active" style="background-color: #3b82f6; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <span>🏷️</span> Promociones &amp; Ofertas (Catálogo)
+    </button>
+    <button type="button" class="pill-btn inactive" (click)="openNewModal()" style="background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+      <span>➕</span> Crear Nueva Promoción
+    </button>
+    <button type="button" class="pill-btn inactive" style="background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+      <span>⚡</span> Descuentos por Categoría
     </button>
   </div>
-</section>
 
-<!-- BÚSQUEDA -->
-<section class="filters-bar glass">
-  <div class="search-box">
-    <span class="search-icon">🔍</span>
-    <input type="text" [(ngModel)]="searchTerm" placeholder="Buscar por nombre de promoción...">
-  </div>
-</section>
-
-<!-- GRID DE PROMOCIONES -->
-<section class="cards" *ngIf="!loading && promocionesFiltradas.length > 0">
-  <article *ngFor="let prom of promocionesFiltradas" class="product glass">
-    <div class="product-header">
-      <span class="code-badge">{{ prom.tipoDescuento }}</span>
-      <div class="stock-badge" [class.low]="prom.estado !== 'A'">
-        {{ prom.estado === 'A' ? 'Activo' : 'Inactivo' }}
-      </div>
-    </div>
-
-    <h3>{{ prom.nombre }}</h3>
-    <p class="desc">{{ prom.descripcion || 'Sin descripción adicional' }}</p>
-
-    <div class="price-row">
-      <div>
-        <span class="price-label">Descuento</span>
-        <strong class="price gold-txt">
-          {{ prom.tipoDescuento === 'PORCENTAJE' ? (prom.valorDescuento + '%') : ('S/ ' + prom.valorDescuento.toFixed(2)) }}
-        </strong>
-      </div>
-
-      <div class="stock-adjust" style="flex-direction: column; align-items: flex-end; font-size: 0.8rem; gap: 0.2rem;">
-        <span><strong>Inicio:</strong> {{ prom.fechaInicio | date:'shortDate' }}</span>
-        <span><strong>Fin:</strong> {{ prom.fechaFin | date:'shortDate' }}</span>
-      </div>
-    </div>
-
-    <div class="card-actions">
-      <button type="button" class="btn-action edit" (click)="openEditModal(prom)">
-        ✏️ Editar
-      </button>
-      <button type="button" class="btn-action delete" (click)="deletePromocion(prom)">
-        🗑️ Eliminar
+  <!-- TARJETA PRINCIPAL (EXACTA A LA CAPTURA) -->
+  <div class="main-card-catalog" style="background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+    
+    <!-- HEADER TARJETA -->
+    <div class="card-top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f1f5f9;">
+      <h2 style="margin: 0; font-size: 20px; font-weight: 700; color: #1e293b;">Catálogo de Promociones y Ofertas</h2>
+      <button type="button" class="btn-nuevo-prod" (click)="openNewModal()" style="background-color: #00a65a; color: white; border: none; padding: 9px 18px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        + Nueva Promoción
       </button>
     </div>
-  </article>
-</section>
 
-<div class="empty-state glass" *ngIf="!loading && promocionesFiltradas.length === 0">
-  <p>No se encontraron promociones.</p>
-</div>
+    <!-- FILTROS Y BÚSQUEDA -->
+    <div class="card-filters-section" style="padding: 16px 20px; background-color: #ffffff;">
+      <div style="display: flex; gap: 20px; align-items: flex-end; flex-wrap: wrap;">
+        
+        <!-- Búsqueda -->
+        <div style="flex: 2; min-width: 280px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">Buscar Promoción / Oferta:</label>
+          <div style="display: flex; width: 100%;">
+            <input type="text" [(ngModel)]="searchTerm" placeholder="Nombre o descripción de la promoción..." style="flex: 1; padding: 8px 12px; border: 1px solid #cbd5e1; border-right: none; border-top-left-radius: 4px; border-bottom-left-radius: 4px; font-size: 13px; outline: none; box-sizing: border-box;">
+            <button type="button" style="background-color: #46b8da; color: white; border: 1px solid #46b8da; padding: 8px 16px; border-top-right-radius: 4px; border-bottom-right-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              🔍 Buscar
+            </button>
+          </div>
+        </div>
 
-<!-- MODAL CREAR / EDITAR -->
-<div class="modal-overlay" *ngIf="showModal">
-  <div class="modal-card glass">
-    <div class="modal-header">
-      <h3>{{ editingPromocion ? '✏️ Editar Promoción' : '✨ Nueva Promoción' }}</h3>
-      <button type="button" class="close-btn" (click)="closeModal()">✕</button>
-    </div>
-
-    <form [formGroup]="form" (ngSubmit)="savePromocion()">
-      
-      <label>
-        Nombre de la Promoción *
-        <input type="text" formControlName="nombre" placeholder="Ej. Cyber Days 2026">
-      </label>
-
-      <label>
-        Descripción
-        <input type="text" formControlName="descripcion" placeholder="Detalles de la promo...">
-      </label>
-
-      <div class="form-row">
-        <label>
-          Tipo de Descuento *
-          <select formControlName="tipoDescuento">
+        <!-- Filtro Tipo -->
+        <div style="flex: 1; min-width: 200px;">
+          <label style="display: block; font-size: 13px; font-weight: 700; color: #334155; margin-bottom: 6px;">Filtrar por Tipo / Estado:</label>
+          <select [(ngModel)]="selectedTipoFilter" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; background-color: #ffffff; color: #334155; outline: none; box-sizing: border-box;">
+            <option value="TODOS">Todas los promociones</option>
             <option value="PORCENTAJE">Porcentaje (%)</option>
             <option value="MONTO">Monto Fijo (S/)</option>
+            <option value="ACTIVAS">Solo Activas</option>
+            <option value="INACTIVAS">Solo Inactivas</option>
           </select>
-        </label>
+        </div>
 
-        <label>
-          Valor del Descuento *
-          <input type="number" step="0.1" formControlName="valorDescuento">
-        </label>
       </div>
+    </div>
 
-      <div class="form-row">
-        <label>
-          Fecha Inicio *
-          <input type="datetime-local" formControlName="fechaInicio">
-        </label>
+    <!-- TABLA ESTILO CATALOGO -->
+    <div class="table-responsive-container" style="overflow-x: auto; padding: 0 20px 10px 20px;">
+      <table style="width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 10px;">
+        <thead>
+          <tr style="background-color: #ffffff;">
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 140px;">Código / Id</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b;">Nombre de la Promoción</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 140px;">Tipo Descuento</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b;">Descripción</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 110px;">Valor</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 110px;">Estado</th>
+            <th style="padding: 12px 10px; text-align: center; font-size: 13px; font-weight: 700; color: #1e293b; width: 100px;">Opción</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let prom of promocionesFiltradas" style="border-bottom: 1px solid #f1f5f9; height: 55px;">
+            
+            <!-- Código Boxed -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <input type="text" [value]="'PROMO-' + (prom.idPromocion || 100)" readonly style="width: 100%; padding: 6px 8px; text-align: center; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; font-weight: 600; color: #334155; background-color: #f8fafc; box-sizing: border-box;">
+            </td>
 
-        <label>
-          Fecha Fin *
-          <input type="datetime-local" formControlName="fechaFin">
-        </label>
-      </div>
+            <!-- Nombre -->
+            <td style="padding: 6px 10px; text-align: left;">
+              <span style="font-weight: 700; font-size: 13px; color: #1e293b;">{{ prom.nombre }}</span>
+            </td>
 
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" (click)="closeModal()">Cancelar</button>
-        <button type="submit" class="btn-primary" [disabled]="saving">
-          {{ saving ? 'Guardando...' : (editingPromocion ? 'Actualizar' : 'Guardar') }}
-        </button>
-      </div>
-    </form>
+            <!-- Tipo Badge Teal / Cyan -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <span style="display: inline-block; width: 100%; padding: 6px 4px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; text-align: center; color: #ffffff;"
+                    [style.background-color]="prom.tipoDescuento === 'PORCENTAJE' ? '#0073b7' : '#f39c12'">
+                {{ prom.tipoDescuento === 'PORCENTAJE' ? '% PORCENTAJE' : '💵 MONTO FIJO' }}
+              </span>
+            </td>
+
+            <!-- Descripción Boxed -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <input type="text" [value]="prom.descripcion || 'Sin descripción'" readonly style="width: 100%; padding: 6px 8px; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; color: #475569; background-color: #ffffff; box-sizing: border-box;">
+            </td>
+
+            <!-- Valor Boxed -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <input type="text" [value]="prom.tipoDescuento === 'PORCENTAJE' ? (prom.valorDescuento + '% OFF') : ('S/ ' + prom.valorDescuento.toFixed(2))" readonly style="width: 100%; padding: 6px 8px; text-align: center; border: 1px solid #d1d5db; border-radius: 3px; font-size: 12px; font-weight: 700; color: #00a65a; background-color: #ffffff; box-sizing: border-box;">
+            </td>
+
+            <!-- Estado Badge -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white;"
+                    [style.background-color]="prom.estado === 'A' || !prom.estado ? '#00a65a' : '#d9534f'">
+                {{ prom.estado === 'A' || !prom.estado ? 'ACTIVA' : 'INACTIVA' }}
+              </span>
+            </td>
+
+            <!-- Opción (Botones Cuadrados Rojo/Verde exactamente como en la captura) -->
+            <td style="padding: 6px 10px; text-align: center;">
+              <div style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+                <button type="button" (click)="deletePromocion(prom)" title="Eliminar Promoción" style="background-color: #d9534f; color: white; border: none; width: 28px; height: 28px; border-radius: 3px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 12px;">
+                  🗑️
+                </button>
+                <button type="button" (click)="openEditModal(prom)" title="Editar Promoción" style="background-color: #00a65a; color: white; border: none; width: 28px; height: 28px; border-radius: 3px; cursor: pointer; display: flex; justify-content: center; align-items: center; font-size: 12px;">
+                  ✏️
+                </button>
+              </div>
+            </td>
+
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Spinner o Vacío -->
+    <div *ngIf="loading" style="text-align: center; padding: 30px; color: #64748b;">
+      <p style="margin: 0; font-size: 14px;">Cargando promociones y ofertas...</p>
+    </div>
+
+    <div *ngIf="!loading && promocionesFiltradas.length === 0" style="padding: 20px; margin: 10px 20px; background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 4px; color: #64748b; font-size: 13px;">
+      No se encontraron promociones registradas con los filtros seleccionados.
+    </div>
+
+    <!-- FOOTER TARJETA -->
+    <div class="card-bottom-footer" style="padding: 12px 20px; background-color: #ffffff; border-top: 1px solid #f1f5f9;">
+      <span style="font-size: 13px; color: #64748b; font-weight: 500;">Mostrando {{ promocionesFiltradas.length }} promociones</span>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- MODAL CREAR / EDITAR PROMOCIÓN -->
+<div class="modal-overlay" *ngIf="showModal" (click)="closeModal()" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 9999;">
+  <div class="adminlte-modal" (click)="$event.stopPropagation()" style="background: #ffffff; width: 550px; max-width: 95%; border-radius: 6px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.3);">
+    
+    <div class="modal-header" style="background: #00a65a; color: #ffffff; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0; font-size: 18px; font-weight: 700;">
+        {{ editingPromocion ? '✏️ Editar Promoción' : '➕ Crear Nueva Promoción' }}
+      </h3>
+      <button type="button" (click)="closeModal()" style="color: #ffffff; background: none; border: none; font-size: 24px; cursor: pointer;"><span>&times;</span></button>
+    </div>
+
+    <div class="modal-body" style="padding: 20px;">
+      <form [formGroup]="form" (ngSubmit)="savePromocion()">
+        
+        <div style="margin-bottom: 12px;">
+          <label style="font-weight: 700; font-size: 13px; color: #334155;">Nombre de la Promoción *</label>
+          <input type="text" formControlName="nombre" placeholder="Ej. Cyber Days Licores - 20% OFF" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label style="font-weight: 700; font-size: 13px; color: #334155;">Descripción o Detalles</label>
+          <input type="text" formControlName="descripcion" placeholder="Ej. Aplica para todos los whiskies y rones" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Tipo de Descuento *</label>
+            <select formControlName="tipoDescuento" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+              <option value="PORCENTAJE">Porcentaje (%)</option>
+              <option value="MONTO">Monto Fijo (S/)</option>
+            </select>
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Valor del Descuento *</label>
+            <input type="number" step="0.1" formControlName="valorDescuento" placeholder="Ej. 20" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Fecha Inicio *</label>
+            <input type="datetime-local" formControlName="fechaInicio" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+          <div style="flex: 1;">
+            <label style="font-weight: 700; font-size: 13px; color: #334155;">Fecha Fin *</label>
+            <input type="datetime-local" formControlName="fechaFin" style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 13px; margin-top: 4px; box-sizing: border-box;">
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+    <div class="modal-footer" style="background: #f8fafc; padding: 12px 20px; display: flex; justify-content: flex-end; gap: 10px; border-top: 1px solid #e2e8f0;">
+      <button type="button" (click)="closeModal()" style="background: #64748b; color: white; border: none; padding: 8px 16px; border-radius: 4px; font-weight: 600; cursor: pointer;">Cancelar</button>
+      <button type="button" (click)="savePromocion()" [disabled]="saving" style="background: #00a65a; color: white; border: none; padding: 8px 18px; border-radius: 4px; font-weight: 700; cursor: pointer;">
+        {{ saving ? 'Guardando...' : (editingPromocion ? 'Guardar Cambios' : 'Crear Promoción') }}
+      </button>
+    </div>
+
   </div>
 </div>

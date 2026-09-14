@@ -1,0 +1,166 @@
+<div class="orders-root">
+
+  <!-- ══════════════ HEADER ══════════════ -->
+  <div class="orders-header">
+    <div class="header-main">
+      <div>
+        <h1 class="header-title">📦 Mis Compras &amp; Rastreos</h1>
+        <p class="header-sub">Sigue el estado de tus entregas en tiempo real</p>
+      </div>
+      <button class="btn-refresh" (click)="recargar()" title="Actualizar lista">
+        🔄 Actualizar
+      </button>
+    </div>
+
+    <!-- STATS STRIP -->
+    <div class="stats-row" *ngIf="!loading && pedidos.length > 0">
+      <div class="stat-card" [class.active]="filter==='ALL'" (click)="filter='ALL'">
+        <span class="stat-ico">🛍️</span>
+        <div>
+          <span class="stat-num">{{ statsTotal }}</span>
+          <span class="stat-lbl">Pedidos Totales</span>
+        </div>
+      </div>
+      <div class="stat-card blue" [class.active]="filter==='IN_PROGRESS'" (click)="filter='IN_PROGRESS'">
+        <span class="stat-ico">🚚</span>
+        <div>
+          <span class="stat-num">{{ statsEnRuta }}</span>
+          <span class="stat-lbl">En Camino</span>
+        </div>
+      </div>
+      <div class="stat-card green" [class.active]="filter==='DELIVERED'" (click)="filter='DELIVERED'">
+        <span class="stat-ico">✅</span>
+        <div>
+          <span class="stat-num">{{ statsEntregados }}</span>
+          <span class="stat-lbl">Entregados</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ TOAST NOTIFICATION ══════════════ -->
+  <div class="orders-toast" *ngIf="toastMsg">
+    <span>{{ toastMsg }}</span>
+  </div>
+
+  <!-- ══════════════ FILTROS ══════════════ -->
+  <div class="filters-bar" *ngIf="!loading && pedidos.length > 0">
+    <button class="ftab" [class.active]="filter==='ALL'" (click)="filter='ALL'">
+      Todos ({{ statsTotal }})
+    </button>
+    <button class="ftab info" [class.active]="filter==='IN_PROGRESS'" (click)="filter='IN_PROGRESS'">
+      🚚 En Camino ({{ statsEnRuta }})
+    </button>
+    <button class="ftab good" [class.active]="filter==='DELIVERED'" (click)="filter='DELIVERED'">
+      ✅ Entregados ({{ statsEntregados }})
+    </button>
+  </div>
+
+  <!-- ══════════════ LISTA DE PEDIDOS ══════════════ -->
+  <main class="orders-main">
+
+    <!-- Loading -->
+    <div class="loading-box" *ngIf="loading">
+      <div class="spinner-pulse"></div>
+      <p>Cargando tus compras...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-box" *ngIf="!loading && pedidosFiltrados.length === 0">
+      <span class="empty-ico">🛍️</span>
+      <h3>No tienes pedidos en esta sección</h3>
+      <p *ngIf="pedidos.length > 0">No hay compras con este filtro activo.</p>
+      <p *ngIf="pedidos.length === 0">¿Buscas tus licores o cervezas favoritas? Explora nuestro catálogo con entrega express.</p>
+      <a routerLink="/store/catalog" class="btn-catalog">🛒 Explorar Tienda</a>
+    </div>
+
+    <!-- Orders Cards Grid -->
+    <div class="orders-grid" *ngIf="!loading && pedidosFiltrados.length > 0">
+      
+      <div class="order-card" *ngFor="let p of pedidosFiltrados" [class.done]="p.estado==='F'">
+
+        <!-- Card Top: Code, Date & Status Pill -->
+        <div class="card-top">
+          <div class="card-id-block">
+            <span class="order-code">#{{ p.codigoPedido || ('PED-' + p.idPedido) }}</span>
+            <span class="order-date">🕒 {{ (p.fechaPedido || p.fecha) | date:'dd/MM/yyyy · HH:mm' }}</span>
+          </div>
+
+          <span class="status-pill" [ngClass]="getEstadoClase(p)">
+            {{ getEstadoTexto(p) }}
+          </span>
+        </div>
+
+        <!-- TIMELINE TRACKER PASO A PASO -->
+        <div class="tracking-timeline">
+          <div class="timeline-track">
+            <div class="timeline-bar" [style.width.%]="(getTrackingStep(p) - 1) * 33.33"></div>
+          </div>
+          <div class="timeline-steps">
+            <div class="step" [class.active]="getTrackingStep(p) >= 1" [class.current]="getTrackingStep(p) === 1">
+              <div class="step-circle">📝</div>
+              <span class="step-lbl">Recibido</span>
+            </div>
+            <div class="step" [class.active]="getTrackingStep(p) >= 2" [class.current]="getTrackingStep(p) === 2">
+              <div class="step-circle">👨‍🍳</div>
+              <span class="step-lbl">Preparando</span>
+            </div>
+            <div class="step" [class.active]="getTrackingStep(p) >= 3" [class.current]="getTrackingStep(p) === 3">
+              <div class="step-circle">🛵</div>
+              <span class="step-lbl">En Camino</span>
+            </div>
+            <div class="step" [class.active]="getTrackingStep(p) >= 4" [class.current]="getTrackingStep(p) === 4">
+              <div class="step-circle">🎉</div>
+              <span class="step-lbl">Entregado</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Address & Meta Box -->
+        <div class="address-box">
+          <div class="address-row">
+            <span class="pin-ico">📍</span>
+            <div>
+              <strong>Dirección de Entrega:</strong>
+              <p>{{ p.direccionEntrega || 'Entrega a Domicilio - Roma Express' }}</p>
+            </div>
+          </div>
+          <div class="obs-tag" *ngIf="p.observaciones">
+            💬 <em>{{ p.observaciones }}</em>
+          </div>
+        </div>
+
+        <!-- Details Toggle Button -->
+        <div class="details-toggle-row">
+          <button class="btn-toggle-details" (click)="toggleExpand(p)">
+            <span>📦 {{ p.detalles?.length || 1 }} artículo(s) en este pedido</span>
+            <span>{{ isExpanded(p) ? '▲ Ocultar' : '▼ Ver Productos' }}</span>
+          </button>
+        </div>
+
+        <!-- Expanded Items List -->
+        <div class="items-dropdown" *ngIf="isExpanded(p)">
+          <div class="item-row" *ngFor="let item of p.detalles">
+            <span class="item-name">
+              <strong class="qty-tag">{{ item.cantidad }}x</strong>
+              {{ item.producto?.nombre || ('Producto #' + item.idProducto) }}
+            </span>
+            <strong class="gold-txt">S/ {{ item.subtotal | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <!-- Card Foot: Total -->
+        <div class="card-foot">
+          <div class="total-block">
+            <span>Total abonado / a pagar:</span>
+            <span class="total-price">S/ {{ (p.total || p.montoTotal || 0) | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>

@@ -1,130 +1,185 @@
-<section class="dashboard-header">
-  <div class="header-titles">
-    <div class="badge-gold-subtle">RESUMEN EJECUTIVO EN TIEMPO REAL</div>
-    <h1 class="header-main-title">Panel de Control General</h1>
-    <p class="header-sub">Monitorea pedidos, existencias de almacén, flujo de ventas y cartera de clientes.</p>
-  </div>
-  
-  <div class="header-actions">
-    <button type="button" class="btn-primary" routerLink="/admin/pedidos">
-      <span>➕ Nuevo Pedido</span>
-    </button>
-    <button type="button" class="btn-refresh" (click)="cargarDatos()" title="Recargar métricas">
-      <span>🔄 Actualizar</span>
-    </button>
-  </div>
-</section>
+<div class="catalog-dashboard-container" style="padding: 15px; background-color: #f1f5f9; min-height: 100vh; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
 
-<!-- KPI STATS CARDS (GOLD & BLACK ACCENTS) -->
-<section class="stats-grid">
-  <article *ngFor="let stat of stats" class="stat-card glass" [class]="'tone-' + stat.tone">
-    <div class="stat-card-header">
-      <span class="stat-icon-wrapper">{{ stat.icon }}</span>
-      <span class="stat-badge-tag">{{ stat.label }}</span>
+  <!-- CABECERA PRINCIPAL Y ACCIONES RÁPIDAS -->
+  <div class="dashboard-header-bar" style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 16px 20px; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+    <div>
+      <h1 style="margin: 0; font-size: 22px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px;">
+        <span>📊</span> Panel Ejecutivo &amp; Dashboard — Licorería Roma
+      </h1>
+      <p style="margin: 4px 0 0 0; font-size: 13px; color: #64748b;">Control de ventas, existencias de almacén, flujo de pedidos y clientes en tiempo real.</p>
     </div>
-    <div class="stat-body">
-      <strong class="stat-number">{{ stat.value }}</strong>
-      <p class="stat-desc">{{ stat.description }}</p>
+    
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button type="button" routerLink="/admin/reportes" style="background-color: #f59e0b; color: white; border: none; padding: 9px 16px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        📈 Informes &amp; Reportes
+      </button>
+      <button type="button" routerLink="/admin/pedidos" style="background-color: #00a65a; color: white; border: none; padding: 9px 16px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        🛒 + Nuevo Pedido
+      </button>
+      <button type="button" routerLink="/admin/productos" style="background-color: #3b82f6; color: white; border: none; padding: 9px 16px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        📦 + Nuevo Licor
+      </button>
+      <button type="button" routerLink="/admin/clientes" style="background-color: #0284c7; color: white; border: none; padding: 9px 16px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+        👥 + Nuevo Cliente
+      </button>
+      <button type="button" (click)="cargarDatos()" style="background-color: #ffffff; color: #475569; border: 1px solid #cbd5e1; padding: 9px 14px; border-radius: 4px; font-weight: 600; font-size: 13px; cursor: pointer;">
+        🔄 Actualizar
+      </button>
     </div>
-    <div class="stat-gold-bar"></div>
-  </article>
-</section>
-
-<!-- QUICK ACTION SHORTCUTS -->
-<section class="quick-actions-bar glass">
-  <span class="quick-title">⚡ Acciones Rápidas:</span>
-  <div class="quick-buttons">
-    <a routerLink="/admin/productos" class="quick-btn">
-      <span>🍾 Catálogo & Stock</span>
-    </a>
-    <a routerLink="/admin/clientes" class="quick-btn">
-      <span>👥 Directorio Clientes</span>
-    </a>
-    <a routerLink="/admin/pedidos" class="quick-btn">
-      <span>🛍️ Ventas & Despacho</span>
-    </a>
-    <a routerLink="/admin/pagos" class="quick-btn">
-      <span>💳 Créditos & Cuotas</span>
-    </a>
   </div>
-</section>
 
-<!-- TWO COLUMN OPERATIONAL GRID -->
-<section class="operational-grid">
-  
-  <!-- LEFT: Stock Alerts & Low Inventory -->
-  <article class="panel glass">
-    <div class="panel-header">
-      <div class="panel-title-wrap">
-        <span class="panel-badge-alert">⚠️ ALERTA DE STOCK</span>
-        <h2 class="section-title">Productos Críticos / Por Agotarse</h2>
+  <!-- KPIS PRINCIPALES (TARJETAS DE MÉTRICAS) -->
+  <div class="row mb-3" style="display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap;">
+    <div class="kpi-card" style="flex: 1; min-width: 220px; background: #ffffff; border-radius: 6px; padding: 16px 20px; border-left: 4px solid #3b82f6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Recaudado</span>
+        <span style="font-size: 20px;">💰</span>
       </div>
-      <a routerLink="/admin/productos" class="gold-link">Ver todo el inventario →</a>
+      <h3 style="margin: 6px 0 0 0; color: #0f172a; font-size: 24px; font-weight: 800;">S/ {{ totalRecaudadoVal | number:'1.2-2' }}</h3>
+      <span style="font-size: 12px; color: #00a65a; font-weight: 600;">📈 {{ pedidos.length }} pedidos procesados</span>
     </div>
 
-    <div class="custom-table-wrap">
-      <div class="table-head-row">
-        <span>Producto</span>
-        <span>Stock Actual</span>
-        <span>Mínimo</span>
-        <span class="text-right">Precio Venta</span>
+    <div class="kpi-card" style="flex: 1; min-width: 220px; background: #ffffff; border-radius: 6px; padding: 16px 20px; border-left: 4px solid #00a65a; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Pedidos Activos</span>
+        <span style="font-size: 20px;">📦</span>
       </div>
+      <h3 style="margin: 6px 0 0 0; color: #00a65a; font-size: 24px; font-weight: 800;">{{ pedidos.length }}</h3>
+      <span style="font-size: 12px; color: #64748b; font-weight: 500;">En preparación o ruta</span>
+    </div>
+
+    <div class="kpi-card" style="flex: 1; min-width: 220px; background: #ffffff; border-radius: 6px; padding: 16px 20px; border-left: 4px solid #ef4444; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Alerta de Inventario</span>
+        <span style="font-size: 20px;">⚠️</span>
+      </div>
+      <h3 style="margin: 6px 0 0 0; color: #ef4444; font-size: 24px; font-weight: 800;">{{ productosCriticos.length }} licores</h3>
+      <span style="font-size: 12px; color: #ef4444; font-weight: 600;">Requieren reposición urgente</span>
+    </div>
+
+    <div class="kpi-card" style="flex: 1; min-width: 220px; background: #ffffff; border-radius: 6px; padding: 16px 20px; border-left: 4px solid #8b5cf6; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase;">Clientes Registrados</span>
+        <span style="font-size: 20px;">👥</span>
+      </div>
+      <h3 style="margin: 6px 0 0 0; color: #8b5cf6; font-size: 24px; font-weight: 800;">{{ clientes.length }}</h3>
+      <span style="font-size: 12px; color: #64748b; font-weight: 500;">Cartera comercial activa</span>
+    </div>
+  </div>
+
+  <!-- DOS COLUMNAS PRINCIPALES -->
+  <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+    
+    <!-- COLUMNA IZQUIERDA: STOCK CRÍTICO + MÓDULOS -->
+    <div style="flex: 3; min-width: 320px; display: flex; flex-direction: column; gap: 15px;">
       
-      <div class="table-item-row" *ngFor="let prod of productos">
-        <div class="prod-col-name">
-          <strong class="prod-title">{{ prod.nombre }}</strong>
-          <span class="prod-code">{{ prod.codigoBarras || ('PROD-' + prod.idProducto) }}</span>
+      <!-- CARD STOCK CRÍTICO -->
+      <div class="main-card-catalog" style="background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+        <div class="card-top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>⚠️</span> Alertas de Inventario — Licores por Agotarse
+          </h3>
+          <a routerLink="/admin/productos" style="font-size: 12px; font-weight: 700; color: #3b82f6; text-decoration: none;">Ver inventario completo →</a>
         </div>
-        <div>
-          <span class="stock-pill" [class.danger]="prod.stock <= (prod.stockMinimo || 5)">
-            {{ prod.stock }} unid.
-          </span>
+
+        <div class="table-responsive-container" style="overflow-x: auto; padding: 0 15px 10px 15px;">
+          <table style="width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 8px;">
+            <thead>
+              <tr style="background-color: #f8fafc;">
+                <th style="padding: 10px; text-align: left; font-size: 12px; font-weight: 700; color: #475569;">Licor / Producto</th>
+                <th style="padding: 10px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; width: 120px;">Stock Actual</th>
+                <th style="padding: 10px; text-align: center; font-size: 12px; font-weight: 700; color: #475569; width: 100px;">Mínimo</th>
+                <th style="padding: 10px; text-align: right; font-size: 12px; font-weight: 700; color: #475569; width: 110px;">Precio Venta</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let prod of productosCriticos" style="border-bottom: 1px solid #f1f5f9;">
+                <td style="padding: 8px 10px;">
+                  <strong style="font-size: 13px; color: #1e293b;">{{ prod.nombre }}</strong><br>
+                  <span style="font-size: 11px; color: #64748b;">Código: {{ prod.codigoBarras || ('LIC-' + prod.idProducto) }}</span>
+                </td>
+                <td style="padding: 8px 10px; text-align: center;">
+                  <span style="display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; color: white;"
+                        [style.background-color]="prod.stock <= 3 ? '#ef4444' : '#f59e0b'">
+                    {{ prod.stock <= 3 ? '🔴 CRÍTICO: ' : '⚠️ BAJO: ' }} {{ prod.stock }} unid.
+                  </span>
+                </td>
+                <td style="padding: 8px 10px; text-align: center; font-size: 12px; color: #64748b;">
+                  {{ prod.stockMinimo || 5 }} unid.
+                </td>
+                <td style="padding: 8px 10px; text-align: right;">
+                  <strong style="font-size: 13px; color: #00a65a;">S/ {{ prod.precioVenta.toFixed(2) }}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <div class="min-stock-text">
-          {{ prod.stockMinimo || 5 }} unid.
-        </div>
-        <div class="text-right">
-          <strong class="gold-price">S/ {{ prod.precioVenta.toFixed(2) }}</strong>
+
+        <div *ngIf="productosCriticos.length === 0" style="padding: 15px; text-align: center; color: #64748b; font-size: 13px;">
+          ✅ Todo el inventario de licores se encuentra en niveles de stock óptimos.
         </div>
       </div>
 
-      <div class="empty-state" *ngIf="productos.length === 0">
-        <p>No hay productos registrados en el inventario.</p>
+      <!-- CARD ACCESOS RÁPIDOS A MÓDULOS -->
+      <div class="main-card-catalog" style="background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); padding: 16px 20px;">
+        <h3 style="margin: 0 0 12px 0; font-size: 15px; font-weight: 700; color: #1e293b;">⚡ Accesos Rápidos a Módulos del Sistema</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px;">
+          <a routerLink="/admin/pedidos" style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #1e293b; font-weight: 700; font-size: 13px;">
+            <span style="font-size: 20px;">🛒</span> Pedidos &amp; Ventas
+          </a>
+          <a routerLink="/admin/clientes" style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #1e293b; font-weight: 700; font-size: 13px;">
+            <span style="font-size: 20px;">👥</span> Directorio Clientes
+          </a>
+          <a routerLink="/admin/promociones" style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #1e293b; font-weight: 700; font-size: 13px;">
+            <span style="font-size: 20px;">🏷️</span> Promociones &amp; Ofertas
+          </a>
+          <a routerLink="/admin/pagos" style="display: flex; align-items: center; gap: 10px; padding: 12px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; text-decoration: none; color: #1e293b; font-weight: 700; font-size: 13px;">
+            <span style="font-size: 20px;">💳</span> Pagos &amp; Cuotas
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- COLUMNA DERECHA: ÚLTIMAS VENTAS -->
+    <div style="flex: 2; min-width: 300px;">
+      <div class="main-card-catalog" style="background: #ffffff; border-radius: 6px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden;">
+        <div class="card-top-header" style="display: flex; justify-content: space-between; align-items: center; padding: 14px 20px; border-bottom: 1px solid #f1f5f9; background: #ffffff;">
+          <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e293b; display: flex; align-items: center; gap: 6px;">
+            <span>🛒</span> Últimas Ventas Registradas
+          </h3>
+          <a routerLink="/admin/pedidos" style="font-size: 12px; font-weight: 700; color: #3b82f6; text-decoration: none;">Ver todos →</a>
+        </div>
+
+        <div style="padding: 10px 15px;">
+          <div *ngFor="let order of recentPedidos" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #f1f5f9;">
+            <div style="display: flex; flex-direction: column;">
+              <span style="font-weight: 700; font-size: 13px; color: #3b82f6;">{{ order.codigoPedido || ('PED-' + order.idPedido) }}</span>
+              <span style="font-size: 12px; color: #475569; font-weight: 600;">{{ getClienteNombre(order.cliente) }}</span>
+              <span style="font-size: 11px; color: #94a3b8;" *ngIf="order.fechaPedido">{{ order.fechaPedido | date:'dd/MM HH:mm' }}</span>
+            </div>
+
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+              <strong style="font-size: 14px; color: #00a65a;">S/ {{ (order.montoTotal || order.total || 0).toFixed(2) }}</strong>
+              <span style="padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: white;"
+                    [style.background-color]="order.estado === 'P' ? '#00a65a' : (order.estado === 'A' ? '#0073b7' : (order.estado === 'E' ? '#f39c12' : '#00c0ef'))">
+                {{ order.estado === 'P' ? 'PENDIENTE' : (order.estado === 'A' ? 'ACEPTADO' : (order.estado === 'E' ? 'EN CAMINO' : 'ENTREGADO')) }}
+              </span>
+            </div>
+          </div>
+
+          <div *ngIf="recentPedidos.length === 0" style="padding: 20px; text-align: center; color: #64748b; font-size: 13px;">
+            No se registran ventas recientes.
+          </div>
+        </div>
+
+        <div style="padding: 10px 15px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; text-align: center;">
+          <a routerLink="/admin/pedidos" style="font-size: 12px; font-weight: 700; color: #3b82f6; text-decoration: none;">Ir al módulo completo de Pedidos y Ventas →</a>
+        </div>
       </div>
     </div>
-  </article>
 
-  <!-- RIGHT: Recent Orders -->
-  <article class="panel glass">
-    <div class="panel-header">
-      <div class="panel-title-wrap">
-        <span class="panel-badge-gold">🛍️ TRANSACCIONES RECIENTES</span>
-        <h2 class="section-title">Últimos Pedidos Registrados</h2>
-      </div>
-      <a routerLink="/admin/pedidos" class="gold-link">Gestionar pedidos →</a>
-    </div>
+  </div>
 
-    <div class="order-feed">
-      <div class="order-card-item" *ngFor="let order of pedidos">
-        <div class="order-avatar-box">
-          <span>📦</span>
-        </div>
-        <div class="order-client-info">
-          <strong class="order-code">{{ order.codigoPedido || ('PED-' + order.idPedido) }}</strong>
-          <p class="order-client-name">{{ getClienteNombre(order.cliente) }}</p>
-        </div>
-        <div class="order-financial-info">
-          <strong class="gold-price">S/ {{ (order.montoTotal || 0).toFixed(2) }}</strong>
-          <span class="order-status-badge" [class.completed]="order.estado !== 'A' && order.estado !== 'Pendiente'">
-            {{ order.estado === 'A' ? 'En Proceso' : (order.estado || 'Completado') }}
-          </span>
-        </div>
-      </div>
-
-      <div class="empty-state" *ngIf="pedidos.length === 0">
-        <p>No se registran pedidos recientes hoy.</p>
-      </div>
-    </div>
-  </article>
-
-</section>
+</div>

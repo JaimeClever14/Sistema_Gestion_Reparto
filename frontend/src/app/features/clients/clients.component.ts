@@ -56,10 +56,14 @@ export class ClientsComponent implements OnInit {
 
     this.api.get<Cliente[]>('/clientes').subscribe({
       next: (clis) => {
-        this.clientes = clis;
+        const base = (clis && clis.length > 0) ? clis : this.defaultDemoClientes();
+        this.clientes = this.mergeWithRegisteredClients(base);
       },
       error: () => {
         this.cargarDemo();
+      },
+      complete: () => {
+        this.loading = false;
       }
     });
 
@@ -72,26 +76,61 @@ export class ClientsComponent implements OnInit {
           { idTipoDocumento: 1, nombreTipoDocumento: 'DNI', codigoSunat: '1' },
           { idTipoDocumento: 2, nombreTipoDocumento: 'RUC', codigoSunat: '6' }
         ];
-      },
-      complete: () => (this.loading = false)
+      }
     });
+  }
+
+  selectedDocFilter = 'TODOS';
+  selectedCreditoFilter = 'TODOS';
+
+  get totalClientesCount(): number { return this.clientes.length; }
+  get rucClientesCount(): number { return this.clientes.filter(c => String(c.idTipoDocumento) === '2' || (c.numeroDocumento && c.numeroDocumento.length === 11)).length; }
+  get dniClientesCount(): number { return this.clientes.filter(c => String(c.idTipoDocumento) === '1' || (c.numeroDocumento && c.numeroDocumento.length === 8)).length; }
+  get limiteCreditoTotal(): number {
+    return +this.clientes.reduce((sum, c) => sum + (c.limiteCredito || 0), 0).toFixed(2);
   }
 
   getClienteNombre(c: Cliente): string {
+    if (!c) return 'Cliente General';
     const obj = c as any;
-    return obj['nombresRaz\u00f3nSocial'] || obj['nombresRazonSocial'] || 'Sin nombre';
+    return obj['nombresRazónSocial'] || obj['nombresRazonSocial'] || obj['razonSocial'] || (obj['nombres'] ? `${obj.nombres} ${obj.apellidos || ''}`.trim() : 'Cliente Registrado');
   }
 
   get clientesFiltrados(): Cliente[] {
-    if (!this.searchTerm) return this.clientes;
-    const term = this.searchTerm.toLowerCase();
     return this.clientes.filter((c) => {
+      const term = (this.searchTerm || '').toLowerCase().trim();
       const nombre = this.getClienteNombre(c).toLowerCase();
-      return nombre.includes(term) ||
+      const matchSearch = !term ||
+        nombre.includes(term) ||
         (c.apellidos && c.apellidos.toLowerCase().includes(term)) ||
-        (c.numeroDocumento && c.numeroDocumento.includes(term)) ||
-        (c.email && c.email.toLowerCase().includes(term));
+        (c.numeroDocumento && c.numeroDocumento.toLowerCase().includes(term)) ||
+        (c.email && c.email.toLowerCase().includes(term)) ||
+        (c.direccionPrincipal && c.direccionPrincipal.toLowerCase().includes(term));
+
+      const isRuc = String(c.idTipoDocumento) === '2' || (c.numeroDocumento && c.numeroDocumento.length === 11);
+      const matchDoc = this.selectedDocFilter === 'TODOS' ||
+        (this.selectedDocFilter === 'RUC' && isRuc) ||
+        (this.selectedDocFilter === 'DNI' && !isRuc);
+
+      const matchCred = this.selectedCreditoFilter === 'TODOS' ||
+        (this.selectedCreditoFilter === 'CON_CREDITO' && (c.limiteCredito || 0) > 0) ||
+        (this.selectedCreditoFilter === 'ACTIVOS' && (c.estado === 'A' || !c.estado));
+
+      return matchSearch && matchDoc && matchCred;
     });
+  }
+
+  abrirWhatsapp(tel?: string, nombre?: string): void {
+    if (!tel) return;
+    const cleanNum = tel.replace(/\D/g, '');
+    const numConCodigo = cleanNum.startsWith('51') ? cleanNum : '51' + cleanNum;
+    const msg = encodeURIComponent(`Hola ${nombre || 'estimado(a)'}, te contactamos de Licorería Roma.`);
+    window.open(`https://wa.me/${numConCodigo}?text=${msg}`, '_blank');
+  }
+
+  abrirMapa(dir?: string): void {
+    if (!dir) return;
+    window.open(`https://maps.google.com?q=${encodeURIComponent(dir + ', Lima, Peru')}`, '_blank');
   }
 
   openNewModal(): void {
@@ -159,11 +198,8 @@ export class ClientsComponent implements OnInit {
     
     const clienteData: any = {
       ...formVal,
-      razonSocial: formVal.nombresRazonSocial,
-      idTipo: formVal.idTipoDocumento,
-      'nombresRaz\u00f3nSocial': formVal.nombresRazonSocial // Fallback
+      nombresRazonSocial: formVal.nombresRazonSocial
     };
-    delete clienteData.nombresRazonSocial;
 
     if (this.editingCliente && this.editingCliente.idCliente) {
       const updated: Cliente = { ...this.editingCliente, ...clienteData };
@@ -259,12 +295,40 @@ export class ClientsComponent implements OnInit {
     this.tempDirecciones.splice(index, 1);
   }
 
-  private cargarDemo(): void {
-    this.clientes = [
-      { idCliente: 1, idTipoDocumento: 2, numeroDocumento: '20601234567', nombresRazónSocial: 'Inversiones Licoreras SAC', telefono: '987654321', email: 'contacto@licoreras.pe', direccionPrincipal: 'Av. Larco 456, Miraflores', limiteCredito: 5000, estado: 'A' },
-      { idCliente: 2, idTipoDocumento: 1, numeroDocumento: '45891234', nombresRazónSocial: 'Juan Carlos', apellidos: 'Mendoza', telefono: '912345678', email: 'juan.mendoza@gmail.com', direccionPrincipal: 'Calle Los Olivos 123, San Isidro', limiteCredito: 1500, estado: 'A' },
-      { idCliente: 3, idTipoDocumento: 1, numeroDocumento: '78451296', nombresRazónSocial: 'María Elena', apellidos: 'Quispe Rivas', telefono: '954123876', email: 'mquispe@hotmail.com', direccionPrincipal: 'Av. Brasil 1820, Pueblo Libre', limiteCredito: 2000, estado: 'A' }
+  private mergeWithRegisteredClients(baseClients: Cliente[]): Cliente[] {
+    const list = [...baseClients];
+    try {
+      const stored = localStorage.getItem('roma_registered_clients');
+      if (stored) {
+        const registered: Cliente[] = JSON.parse(stored);
+        for (const reg of registered) {
+          const regName = this.getClienteNombre(reg).toLowerCase();
+          const exists = list.some(c => 
+            (c.email && reg.email && c.email.toLowerCase() === reg.email.toLowerCase()) ||
+            (this.getClienteNombre(c).toLowerCase() === regName)
+          );
+          if (!exists) {
+            list.unshift(reg);
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Error merging registered clients', e);
+    }
+    return list;
+  }
+
+  private defaultDemoClientes(): Cliente[] {
+    return [
+      { idCliente: 101, idTipoDocumento: 1, numeroDocumento: '45891201', nombresRazonSocial: 'Cliente 1 (Usuario Registrado)', nombresRazónSocial: 'Cliente 1 (Usuario Registrado)', apellidos: 'Demo', telefono: '987111222', email: 'cliente1@roma.pe', direccionPrincipal: 'Av. Ejercito 789, Miraflores', limiteCredito: 2500, estado: 'A' },
+      { idCliente: 1, idTipoDocumento: 2, numeroDocumento: '20601234567', nombresRazonSocial: 'Inversiones Licoreras SAC', nombresRazónSocial: 'Inversiones Licoreras SAC', telefono: '987654321', email: 'contacto@licoreras.pe', direccionPrincipal: 'Av. Larco 456, Miraflores', limiteCredito: 5000, estado: 'A' },
+      { idCliente: 2, idTipoDocumento: 1, numeroDocumento: '45891234', nombresRazonSocial: 'Juan Carlos Mendoza', nombresRazónSocial: 'Juan Carlos Mendoza', apellidos: 'Mendoza', telefono: '912345678', email: 'juan.mendoza@gmail.com', direccionPrincipal: 'Calle Los Olivos 123, San Isidro', limiteCredito: 1500, estado: 'A' },
+      { idCliente: 3, idTipoDocumento: 1, numeroDocumento: '78451296', nombresRazonSocial: 'María Elena Quispe Rivas', nombresRazónSocial: 'María Elena Quispe Rivas', apellidos: 'Quispe Rivas', telefono: '954123876', email: 'mquispe@hotmail.com', direccionPrincipal: 'Av. Brasil 1820, Pueblo Libre', limiteCredito: 2000, estado: 'A' }
     ];
+  }
+
+  private cargarDemo(): void {
+    this.clientes = this.mergeWithRegisteredClients(this.defaultDemoClientes());
     this.loading = false;
   }
 }

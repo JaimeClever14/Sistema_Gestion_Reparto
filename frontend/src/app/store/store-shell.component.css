@@ -6,7 +6,7 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--bg);
+  background: #f5f5f5;
 }
 
 /* ─── HEADER AMARILLO ───────────────────────────────────── */
@@ -219,6 +219,97 @@
   margin: 4px 0;
 }
 
+/* ─── NOTIFICATION BELL & DROPDOWN ──────────────────────── */
+.notif-wrapper {
+  position: relative;
+}
+.notif-bell-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s;
+}
+.notif-bell-btn:hover {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.05);
+}
+.notif-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 900;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.5);
+  animation: pulse 1.5s infinite;
+}
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 310px;
+  background: #12141d;
+  border: 1.5px solid rgba(250, 204, 21, 0.3);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  overflow: hidden;
+  color: #f4f4f5;
+  animation: fadeInUp 0.2s ease;
+}
+.notif-header {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+.btn-clear-notif {
+  background: transparent;
+  border: 0;
+  color: #facc15;
+  font-weight: 700;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+.notif-list {
+  max-height: 320px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.notif-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.notif-item.unread {
+  background: rgba(250, 204, 21, 0.08);
+  border-left: 3px solid #facc15;
+}
+.notif-title { font-size: 0.83rem; color: #fff; font-weight: 800; }
+.notif-msg { font-size: 0.78rem; color: #d4d4d8; line-height: 1.3; }
+.notif-time { font-size: 0.68rem; color: #71717a; text-align: right; }
+.notif-empty { padding: 24px 16px; text-align: center; color: #71717a; font-size: 0.82rem; }
+
+
 /* ─── NAVBAR CATEGORÍAS ─────────────────────────────────── */
 .meli-nav {
   background: #3483FA;
@@ -315,48 +406,7 @@
   color: #AAAAAA;
 }
 
-/* ─── RESPONSIVE ────────────────────────────────────────── */
-@media (max-width: 768px) {
-  .header-inner {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .search-wrapper {
-    order: 3;
-    flex-basis: 100%;
-    max-width: 100%;
-  }
-
-  .user-details {
-    display: none;
-  }
-
-  .nav-inner {
-    gap: 0;
-  }
-
-  .nav-link {
-    font-size: 0.8rem;
-    padding: 10px 10px;
-  }
-
-  .footer-inner {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 480px) {
-  .logo-text {
-    display: none;
-  }
-
-  .footer-inner {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* ═══ CART SLIDEOVER ═══ */
+/* ─── CART SLIDEOVER ────────────────────────────────────── */
 .cart-btn {
   background: none;
   border: none;
@@ -385,7 +435,7 @@
   font-weight: bold;
   padding: 2px 6px;
   border-radius: 10px;
-  border: 2px solid var(--meli-yellow);
+  border: 2px solid #FFF159;
 }
 
 .cart-overlay {
@@ -438,10 +488,6 @@
   font-size: 1.2rem;
   cursor: pointer;
   color: #999;
-}
-
-.close-cart-btn:hover {
-  color: #333;
 }
 
 .cart-body {
@@ -541,10 +587,6 @@
   transition: opacity 0.2s;
 }
 
-.remove-btn:hover {
-  opacity: 1;
-}
-
 .cart-footer {
   padding: 20px;
   border-top: 1px solid #eee;
@@ -568,9 +610,430 @@
   border-top: 1px solid #ddd;
 }
 
+.btn-primary-meli {
+  background-color: #3483FA;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary-meli:hover {
+  background-color: #2968c8;
+}
+
 .btn-checkout {
   width: 100%;
   margin-top: 15px;
-  padding: 12px;
   font-size: 1.1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   🚀 ANIMACIÓN ESPECTACULAR CAMIÓN DE REPARTO A TODA VELOCIDAD 🚀
+   ═══════════════════════════════════════════════════════════ */
+
+.truck-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 16, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.truck-scene {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pista / Carretera nocturna */
+.road-track {
+  position: absolute;
+  bottom: 25%;
+  width: 120vw;
+  height: 90px;
+  background: #1e1e24;
+  border-top: 4px solid #3483FA;
+  border-bottom: 4px solid #FFF159;
+  box-shadow: 0 0 30px rgba(52, 131, 250, 0.3);
+  overflow: hidden;
+}
+
+.road-lines {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 200%;
+  height: 8px;
+  background: repeating-linear-gradient(90deg, #FFF159, #FFF159 40px, transparent 40px, transparent 80px);
+  transform: translateY(-50%);
+  animation: moveRoad 0.4s linear infinite;
+}
+
+@keyframes moveRoad {
+  0% { transform: translateY(-50%) translateX(0); }
+  100% { transform: translateY(-50%) translateX(-80px); }
+}
+
+/* Ráfagas de viento de velocidad */
+.speed-lines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.speed-lines span {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(52, 131, 250, 0.8), transparent);
+  animation: speedStreak 0.6s linear infinite;
+}
+
+.speed-lines span:nth-child(1) { top: 20%; width: 250px; animation-duration: 0.4s; }
+.speed-lines span:nth-child(2) { top: 40%; width: 180px; animation-duration: 0.5s; animation-delay: 0.1s; }
+.speed-lines span:nth-child(3) { top: 60%; width: 300px; animation-duration: 0.3s; }
+.speed-lines span:nth-child(4) { top: 75%; width: 200px; animation-duration: 0.45s; }
+
+@keyframes speedStreak {
+  0% { left: 100vw; opacity: 0; }
+  50% { opacity: 1; }
+  100% { left: -300px; opacity: 0; }
+}
+
+/* Camión repotenciado en movimiento */
+.speed-truck-wrapper {
+  position: absolute;
+  bottom: 26%;
+  left: -320px;
+  display: flex;
+  align-items: flex-end;
+  animation: truckDriveSpeed 2.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes truckDriveSpeed {
+  0% { left: -350px; }
+  60% { left: 45vw; }
+  85% { left: 50vw; }
+  100% { left: 110vw; }
+}
+
+.speed-truck-wrapper.arrived {
+  animation: none;
+  left: 45vw;
+  transform: translateX(-50%);
+}
+
+/* Humo y chispas */
+.smoke-particles {
+  display: flex;
+  align-items: center;
+  margin-right: -10px;
+  z-index: 1;
+}
+
+.smoke {
+  font-size: 1.8rem;
+  animation: puff 0.4s ease-out infinite alternate;
+  opacity: 0.8;
+}
+
+.smoke.p1 { animation-delay: 0s; }
+.smoke.p2 { animation-delay: 0.15s; }
+.smoke.p3 { animation-delay: 0.3s; }
+
+.fire-spark {
+  font-size: 1.5rem;
+  color: #FFF159;
+  animation: sparkFlash 0.2s infinite alternate;
+}
+
+@keyframes puff {
+  0% { transform: scale(0.8) translateX(0); opacity: 0.3; }
+  100% { transform: scale(1.4) translateX(-20px); opacity: 0.9; }
+}
+
+@keyframes sparkFlash {
+  0% { opacity: 0.2; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.3); }
+}
+
+/* Cuerpo del Camión */
+.truck-body-box {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  animation: truckVibrate 0.12s ease-in-out infinite alternate;
+}
+
+@keyframes truckVibrate {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-3px); }
+}
+
+.truck-trailer {
+  width: 190px;
+  height: 100px;
+  background: linear-gradient(135deg, #3483FA, #1d65d4);
+  border-radius: 12px 4px 4px 4px;
+  border: 3px solid #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 8px 25px rgba(52, 131, 250, 0.5);
+  position: relative;
+}
+
+.trailer-logo {
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  color: #FFF159;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.speed-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  background: #00a65a;
+  padding: 3px 8px;
+  border-radius: 10px;
+  margin-top: 4px;
+}
+
+.truck-cab {
+  width: 80px;
+  height: 75px;
+  background: #FFF159;
+  border-radius: 0 16px 8px 0;
+  border: 3px solid #ffffff;
+  border-left: none;
+  position: relative;
+}
+
+.truck-window {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 38px;
+  height: 28px;
+  background: #1e293b;
+  border-radius: 0 10px 2px 2px;
+  border: 2px solid #ffffff;
+}
+
+.headlight-beam {
+  position: absolute;
+  bottom: 15px;
+  right: -120px;
+  width: 130px;
+  height: 40px;
+  background: linear-gradient(90deg, rgba(255, 241, 89, 0.85), transparent);
+  clip-path: polygon(0 30%, 100% 0, 100% 100%, 0 70%);
+  pointer-events: none;
+}
+
+.truck-wheel {
+  position: absolute;
+  bottom: -16px;
+  font-size: 1.8rem;
+  animation: wheelSpin 0.2s linear infinite;
+}
+
+.wheel-back { left: 30px; }
+.wheel-front { right: 20px; }
+
+@keyframes wheelSpin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Tarjeta de estado de despacho */
+.truck-status-card {
+  position: absolute;
+  top: 15%;
+  background: rgba(18, 18, 24, 0.95);
+  border: 2px solid #FFF159;
+  border-radius: 20px;
+  padding: 24px 36px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8);
+  max-width: 550px;
+  width: 90%;
+  animation: cardFadeIn 0.4s ease-out;
+}
+
+@keyframes cardFadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.status-badge-animated {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 166, 90, 0.2);
+  border: 1px solid #00a65a;
+  color: #4ade80;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4ade80;
+  animation: dotPulse 0.8s infinite alternate;
+}
+
+@keyframes dotPulse {
+  0% { opacity: 0.3; transform: scale(0.8); }
+  100% { opacity: 1; transform: scale(1.3); }
+}
+
+.order-code-glow {
+  margin: 0;
+  font-size: 1.6rem;
+  color: #FFF159;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  text-shadow: 0 0 10px rgba(255, 241, 89, 0.4);
+}
+
+.speed-sub {
+  color: #a1a1aa;
+  font-size: 0.95rem;
+  margin: 8px 0 20px;
+}
+
+.speed-progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #3483FA, #FFF159, #00a65a);
+  border-radius: 10px;
+  transition: width 2.5s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.progress-fill.full {
+  width: 100%;
+}
+
+/* Modal final de confirmación */
+.order-success-modal {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 32px;
+  text-align: center;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  animation: modalPop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-success-icon {
+  font-size: 3.5rem;
+  margin-bottom: 10px;
+}
+
+.order-success-modal h2 {
+  margin: 0 0 8px;
+  font-size: 1.4rem;
+  color: #333;
+}
+
+.success-subtitle {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 24px;
+}
+
+.order-summary-box {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  border: 1px solid #e9ecef;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 0.92rem;
+  color: #495057;
+  border-bottom: 1px dashed #dee2e6;
+}
+
+.summary-row:last-child {
+  border-bottom: none;
+}
+
+.total-price {
+  color: #00a65a;
+  font-size: 1.1rem;
+}
+
+.delivery-badge {
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.success-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.success-actions button {
+  flex: 1;
+}
+
+.btn-secondary-meli {
+  background: #f1f3f5;
+  color: #495057;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  padding: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary-meli:hover {
+  background: #e9ecef;
 }

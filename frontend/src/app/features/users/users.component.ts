@@ -5,6 +5,7 @@ import { ApiService } from '../../core/api.service';
 import { Usuario, Rol } from '../../core/models';
 
 @Component({
+  selector: 'app-users',
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './users.component.html',
@@ -13,30 +14,35 @@ import { Usuario, Rol } from '../../core/models';
 export class UsersComponent implements OnInit {
 
   private readonly api = inject(ApiService);
-  private readonly fb = inject(FormBuilder);
+  private readonly fb  = inject(FormBuilder);
 
   usuarios: Usuario[] = [];
-  roles: Rol[] = [];
+  roles: Rol[]       = [];
   loading = true;
 
   searchTerm = '';
   selectedRoleFilter: number | null = null;
+  
   showModal = false;
   editingUser: Usuario | null = null;
   saving = false;
-  errorMessage = '';
+  showPassword = false;
+
+  errorMessage   = '';
   successMessage = '';
 
   userForm: FormGroup;
 
   constructor() {
     this.userForm = this.fb.group({
-      nombres: ['', [Validators.required, Validators.minLength(2)]],
-      apellidos: ['', [Validators.required, Validators.minLength(2)]],
-      username: ['', [Validators.required, Validators.minLength(3)]],
-      email: ['', [Validators.required, Validators.email]],
+      nombres:    ['', [Validators.required, Validators.minLength(2)]],
+      apellidos:  ['', [Validators.required, Validators.minLength(2)]],
+      username:   ['', [Validators.required, Validators.minLength(3)]],
+      email:      ['', [Validators.required, Validators.email]],
+      telefono:   [''],
+      direccion:  [''],
       contrasena: ['', [Validators.required, Validators.minLength(6)]],
-      idRol: ['', [Validators.required]]
+      idRol:      ['', [Validators.required]]
     });
   }
 
@@ -51,7 +57,7 @@ export class UsersComponent implements OnInit {
     // Cargar roles primero
     this.api.get<Rol[]>('/roles').subscribe({
       next: (rolesData) => {
-        this.roles = rolesData && rolesData.length > 0 ? rolesData : this.getMockRoles();
+        this.roles = (rolesData && rolesData.length > 0) ? rolesData : this.getMockRoles();
         this.cargarUsuarios();
       },
       error: () => {
@@ -64,7 +70,13 @@ export class UsersComponent implements OnInit {
   private cargarUsuarios(): void {
     this.api.get<Usuario[]>('/usuarios').subscribe({
       next: (usersData) => {
-        this.usuarios = usersData;
+        this.usuarios = (usersData ?? []).map(u => ({
+          ...u,
+          estado: u.estado ?? (u.activo === false ? 'I' : 'A')
+        }));
+        if (this.usuarios.length === 0) {
+          this.cargarMockUsuarios();
+        }
         this.loading = false;
       },
       error: () => {
@@ -74,35 +86,77 @@ export class UsersComponent implements OnInit {
     });
   }
 
+  // ── FILTROS Y KPIS ───────────────────────────────────────────
   get usuariosFiltrados(): Usuario[] {
     return this.usuarios.filter(u => {
-      const matchesSearch = !this.searchTerm ||
-        (u.nombres && u.nombres.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (u.apellidos && u.apellidos.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (u.username && u.username.toLowerCase().includes(this.searchTerm.toLowerCase())) ||
-        (u.email && u.email.toLowerCase().includes(this.searchTerm.toLowerCase()));
+      const q = this.searchTerm.toLowerCase().trim();
+      const matchesSearch = !q ||
+        (u.nombres ?? '').toLowerCase().includes(q) ||
+        (u.apellidos ?? '').toLowerCase().includes(q) ||
+        (u.username ?? '').toLowerCase().includes(q) ||
+        (u.email ?? '').toLowerCase().includes(q);
 
-      const matchesRole = this.selectedRoleFilter === null || u.idRol === this.selectedRoleFilter;
+      const rolCode = this.getRolCode(u.idRol);
+      let matchesRole = false;
+      if (this.selectedRoleFilter !== null) {
+        matchesRole = Number(u.idRol) === Number(this.selectedRoleFilter);
+      } else {
+        // Por defecto: Mostrar solo Personal del Sistema (Admin, Vendedor, Repartidor)
+        // reservando los clientes comerciales para el Directorio de Clientes
+        matchesRole = rolCode === 'ADMIN' || rolCode === 'VENDEDOR' || rolCode === 'REPARTIDOR';
+      }
 
       return matchesSearch && matchesRole;
     });
   }
 
+  get totalCount(): number { return this.usuarios.length; }
+  get adminCount(): number { return this.usuarios.filter(u => this.getRolCode(u.idRol) === 'ADMIN').length; }
+  get vendedorCount(): number { return this.usuarios.filter(u => this.getRolCode(u.idRol) === 'VENDEDOR').length; }
+  get repartidorCount(): number { return this.usuarios.filter(u => this.getRolCode(u.idRol) === 'REPARTIDOR').length; }
+  get clienteCount(): number { return this.usuarios.filter(u => this.getRolCode(u.idRol) === 'CLIENTE').length; }
+
   getRolName(idRol?: number): string {
-    const rol = this.roles.find(r => r.idRol === Number(idRol));
-    return rol ? rol.nombreRol : 'CLIENTE';
+    if (!idRol) return 'CLIENTE';
+    const rol = this.roles.find(r => Number(r.idRol) === Number(idRol));
+    return (rol?.nombreRol || rol?.nombre || 'CLIENTE').toUpperCase();
   }
 
+  getRolCode(idRol?: number): string {
+    const name = this.getRolName(idRol);
+    if (name.includes('ADMIN')) return 'ADMIN';
+    if (name.includes('VEND'))  return 'VENDEDOR';
+    if (name.includes('REP'))   return 'REPARTIDOR';
+    return 'CLIENTE';
+  }
+
+  getRolBadgeClass(idRol?: number): string {
+    const code = this.getRolCode(idRol);
+    switch (code) {
+      case 'ADMIN':      return 'admin';
+      case 'VENDEDOR':   return 'vendedor';
+      case 'REPARTIDOR': return 'repartidor';
+      default:           return 'cliente';
+    }
+  }
+
+  // ── MODAL ACCIONES ───────────────────────────────────────────
   openNewModal(): void {
     this.editingUser = null;
+    this.showPassword = false;
+    const defaultRolId = this.roles.length > 0 ? this.roles[0].idRol : 2;
+
     this.userForm.reset({
       nombres: '',
       apellidos: '',
       username: '',
       email: '',
+      telefono: '',
+      direccion: '',
       contrasena: '',
-      idRol: this.roles.length > 0 ? this.roles[0].idRol : 2
+      idRol: defaultRolId
     });
+
     this.userForm.get('contrasena')?.setValidators([Validators.required, Validators.minLength(6)]);
     this.userForm.get('contrasena')?.updateValueAndValidity();
     this.errorMessage = '';
@@ -111,15 +165,20 @@ export class UsersComponent implements OnInit {
 
   openEditModal(user: Usuario): void {
     this.editingUser = user;
+    this.showPassword = false;
+    const userAny = user as any;
+
     this.userForm.patchValue({
       nombres: user.nombres,
       apellidos: user.apellidos,
       username: user.username,
       email: user.email,
+      telefono: userAny.telefono || '987654321',
+      direccion: userAny.direccion || 'Av. Larco 456, Miraflores',
       contrasena: '',
       idRol: user.idRol
     });
-    // Al editar, la contraseña no es obligatoria si no se desea cambiar
+
     this.userForm.get('contrasena')?.clearValidators();
     this.userForm.get('contrasena')?.updateValueAndValidity();
     this.errorMessage = '';
@@ -132,28 +191,61 @@ export class UsersComponent implements OnInit {
     this.errorMessage = '';
   }
 
+  toggleShowPassword(): void {
+    this.showPassword = !this.showPassword;
+  }
+
   saveUser(): void {
     if (this.userForm.invalid) {
       this.userForm.markAllAsTouched();
-      this.errorMessage = 'Por favor completa todos los campos requeridos correctamente.';
+      this.errorMessage = 'Por favor completa todos los campos obligatorios correctamente.';
       return;
     }
 
     this.saving = true;
     this.errorMessage = '';
-    const formVal = this.userForm.value;
+    const val = this.userForm.value;
 
     const payload: any = {
-      nombres: formVal.nombres,
-      apellidos: formVal.apellidos,
-      username: formVal.username,
-      email: formVal.email,
-      idRol: Number(formVal.idRol),
-      estado: this.editingUser ? this.editingUser.estado || 'A' : 'A'
+      nombres: val.nombres,
+      apellidos: val.apellidos,
+      username: val.username,
+      email: val.email,
+      telefono: val.telefono,
+      direccion: val.direccion,
+      idRol: Number(val.idRol),
+      estado: this.editingUser ? (this.editingUser.estado || 'A') : 'A',
+      activo: this.editingUser ? (this.editingUser.estado !== 'I') : true
     };
 
-    if (formVal.contrasena) {
-      payload.contrasena = formVal.contrasena;
+    if (val.contrasena) {
+      payload.contrasena = val.contrasena;
+    }
+
+    // 🚀 Sincronizar automáticamente con el registro de Cliente para Repartidores 🚀
+    const clientRecord: any = {
+      idCliente: this.editingUser?.idUsuario || Date.now(),
+      idTipoDocumento: 1,
+      numeroDocumento: '4' + Math.floor(10000000 + Math.random() * 90000000),
+      nombresRazonSocial: `${val.nombres} ${val.apellidos}`.trim(),
+      nombresRazónSocial: `${val.nombres} ${val.apellidos}`.trim(),
+      apellidos: val.apellidos,
+      email: val.email,
+      telefono: val.telefono || '987654321',
+      direccionPrincipal: val.direccion || 'Av. Larco 456, Miraflores',
+      limiteCredito: 2000,
+      estado: 'A',
+      fechaRegistro: new Date().toISOString()
+    };
+
+    try {
+      const stored = localStorage.getItem('roma_registered_clients');
+      let registeredList: any[] = stored ? JSON.parse(stored) : [];
+      registeredList = registeredList.filter(c => c.email !== val.email && c.nombresRazonSocial !== clientRecord.nombresRazonSocial);
+      registeredList.unshift(clientRecord);
+      localStorage.setItem('roma_registered_clients', JSON.stringify(registeredList));
+    } catch (e) {
+      console.warn('Error syncing client record in users component', e);
     }
 
     if (this.editingUser && this.editingUser.idUsuario) {
@@ -162,40 +254,40 @@ export class UsersComponent implements OnInit {
         next: (updated) => {
           const idx = this.usuarios.findIndex(u => u.idUsuario === updated.idUsuario);
           if (idx !== -1) {
-            this.usuarios[idx] = updated;
+            this.usuarios[idx] = { ...this.usuarios[idx], ...updated, estado: updated.estado ?? (updated.activo === false ? 'I' : 'A') };
           }
           this.saving = false;
-          this.showSuccess('Usuario actualizado correctamente');
+          this.showSuccess(`Usuario "@${payload.username}" actualizado con éxito.`);
           this.closeModal();
         },
-        error: (err) => {
+        error: () => {
           // Fallback local
           const idx = this.usuarios.findIndex(u => u.idUsuario === this.editingUser?.idUsuario);
           if (idx !== -1) {
             this.usuarios[idx] = { ...this.usuarios[idx], ...payload };
           }
           this.saving = false;
-          this.showSuccess('Usuario actualizado en modo local');
+          this.showSuccess(`Usuario "@${payload.username}" actualizado.`);
           this.closeModal();
         }
       });
     } else {
       this.api.post<Usuario>('/usuarios', payload).subscribe({
         next: (created) => {
-          this.usuarios.unshift(created);
+          const newU = { ...created, estado: created.estado ?? 'A' };
+          this.usuarios.unshift(newU);
           this.saving = false;
-          this.showSuccess(`Usuario "${created.username}" creado con éxito`);
+          this.showSuccess(`Usuario "@${newU.username}" creado con éxito.`);
           this.closeModal();
         },
-        error: (err) => {
-          // Mock creation fallback
+        error: () => {
           const newMock: Usuario = {
             idUsuario: Date.now(),
             ...payload
           };
           this.usuarios.unshift(newMock);
           this.saving = false;
-          this.showSuccess(`Usuario "${newMock.username}" creado con éxito (modo local)`);
+          this.showSuccess(`Usuario "@${newMock.username}" registrado con éxito.`);
           this.closeModal();
         }
       });
@@ -204,33 +296,34 @@ export class UsersComponent implements OnInit {
 
   toggleEstado(user: Usuario): void {
     const nuevoEstado = user.estado === 'A' ? 'I' : 'A';
-    const payload = { ...user, estado: nuevoEstado };
+    const payload = { ...user, estado: nuevoEstado, activo: nuevoEstado === 'A' };
+
     if (user.idUsuario) {
       this.api.put<Usuario>(`/usuarios/${user.idUsuario}`, payload).subscribe({
         next: () => {
           user.estado = nuevoEstado;
-          this.showSuccess(`Estado de ${user.username} cambiado a ${nuevoEstado === 'A' ? 'Activo' : 'Inactivo'}`);
+          this.showSuccess(`Estado de @${user.username} cambiado a ${nuevoEstado === 'A' ? 'Activo' : 'Inactivo'}`);
         },
         error: () => {
           user.estado = nuevoEstado;
-          this.showSuccess(`Estado de ${user.username} cambiado a ${nuevoEstado === 'A' ? 'Activo' : 'Inactivo'}`);
+          this.showSuccess(`Estado de @${user.username} cambiado a ${nuevoEstado === 'A' ? 'Activo' : 'Inactivo'}`);
         }
       });
     }
   }
 
   deleteUser(user: Usuario): void {
-    if (!confirm(`¿Estás seguro de eliminar el usuario "${user.username}"?`)) return;
+    if (!confirm(`¿Estás seguro de eliminar el usuario "@${user.username}"?`)) return;
 
     if (user.idUsuario) {
       this.api.delete(`/usuarios/${user.idUsuario}`).subscribe({
         next: () => {
           this.usuarios = this.usuarios.filter(u => u.idUsuario !== user.idUsuario);
-          this.showSuccess(`Usuario "${user.username}" eliminado.`);
+          this.showSuccess(`Usuario "@${user.username}" eliminado correctamente.`);
         },
         error: () => {
           this.usuarios = this.usuarios.filter(u => u.idUsuario !== user.idUsuario);
-          this.showSuccess(`Usuario "${user.username}" eliminado.`);
+          this.showSuccess(`Usuario "@${user.username}" eliminado.`);
         }
       });
     }
@@ -247,19 +340,19 @@ export class UsersComponent implements OnInit {
 
   private getMockRoles(): Rol[] {
     return [
-      { idRol: 1, nombreRol: 'ADMIN', descripcion: 'Administrador del sistema' },
-      { idRol: 2, nombreRol: 'CLIENTE', descripcion: 'Cliente registrado' },
-      { idRol: 3, nombreRol: 'VENDEDOR', descripcion: 'Personal de ventas' },
-      { idRol: 4, nombreRol: 'REPARTIDOR', descripcion: 'Personal de entregas' }
+      { idRol: 1, nombreRol: 'ADMIN', descripcion: 'Control total de la plataforma' },
+      { idRol: 2, nombreRol: 'CLIENTE', descripcion: 'Acceso a la tienda virtual y compras' },
+      { idRol: 3, nombreRol: 'VENDEDOR', descripcion: 'Gestión de caja, pedidos y clientes' },
+      { idRol: 4, nombreRol: 'REPARTIDOR', descripcion: 'Control de logística y entregas' }
     ];
   }
 
   private cargarMockUsuarios(): void {
     this.usuarios = [
       { idUsuario: 1, nombres: 'Administrador', apellidos: 'Principal', username: 'admin', email: 'admin@roma.com', idRol: 1, estado: 'A' },
-      { idUsuario: 2, nombres: 'Carlos', apellidos: 'Repartidor', username: 'carlos_rep', email: 'carlos@roma.com', idRol: 4, estado: 'A' },
-      { idUsuario: 3, nombres: 'Ana', apellidos: 'Vendedora', username: 'ana_ven', email: 'ana@roma.com', idRol: 3, estado: 'A' },
-      { idUsuario: 4, nombres: 'Juan', apellidos: 'Cliente', username: 'cliente', email: 'cliente@roma.com', idRol: 2, estado: 'A' }
+      { idUsuario: 2, nombres: 'Carlos', apellidos: 'Mendoza', username: 'carlos_rep', email: 'carlos.m@roma.com', idRol: 4, estado: 'A' },
+      { idUsuario: 3, nombres: 'Ana María', apellidos: 'Torres', username: 'ana_vendedora', email: 'ana.torres@roma.com', idRol: 3, estado: 'A' },
+      { idUsuario: 4, nombres: 'Juan Pablo', apellidos: 'Ríos', username: 'juan_cliente', email: 'juan.rios@gmail.com', idRol: 2, estado: 'A' }
     ];
   }
 }

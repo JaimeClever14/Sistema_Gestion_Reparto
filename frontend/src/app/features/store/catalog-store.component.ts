@@ -31,19 +31,24 @@ export class CatalogStoreComponent implements OnInit {
   ngOnInit(): void {
     this.cargarDatos();
 
-    // Listen to query params from search bar
     this.route.queryParams.subscribe((params) => {
       if (params['q']) {
         this.searchTerm = params['q'];
       }
-      if (params['category']) {
-        const catName = params['category'];
-        const foundCat = this.categorias.find(c => c.nombreCategoria === catName);
+      if (params['categoryId']) {
+        this.selectedCategoriaId = Number(params['categoryId']);
+      } else if (params['category']) {
+        const catName = String(params['category']).toLowerCase();
+        const foundCat = this.categorias.find(c => this.getNombreCat(c).toLowerCase() === catName);
         if (foundCat) {
           this.selectedCategoriaId = foundCat.idCategoria || null;
         }
       }
     });
+  }
+
+  getNombreCat(cat: Categoria): string {
+    return cat.nombre || cat.nombreCategoria || 'Categoría';
   }
 
   cargarDatos(): void {
@@ -60,14 +65,19 @@ export class CatalogStoreComponent implements OnInit {
 
     this.api.get<Categoria[]>('/categorias').subscribe({
       next: (cats) => {
-        this.categorias = cats;
+        this.categorias = (cats && cats.length > 0) ? cats : [
+          { idCategoria: 1, nombre: 'Licores & Destilados' },
+          { idCategoria: 2, nombre: 'Cervezas' },
+          { idCategoria: 3, nombre: 'Vinos' },
+          { idCategoria: 4, nombre: 'Bebidas Sin Alcohol' }
+        ];
       },
       error: () => {
         this.categorias = [
-          { idCategoria: 1, nombreCategoria: 'Licores & Destilados' },
-          { idCategoria: 2, nombreCategoria: 'Cervezas' },
-          { idCategoria: 3, nombreCategoria: 'Vinos' },
-          { idCategoria: 4, nombreCategoria: 'Bebidas Sin Alcohol' }
+          { idCategoria: 1, nombre: 'Licores & Destilados' },
+          { idCategoria: 2, nombre: 'Cervezas' },
+          { idCategoria: 3, nombre: 'Vinos' },
+          { idCategoria: 4, nombre: 'Bebidas Sin Alcohol' }
         ];
       },
       complete: () => {
@@ -136,8 +146,17 @@ export class CatalogStoreComponent implements OnInit {
     return Math.floor(Math.random() * 20) + 5;
   }
 
+  addedProductId: number | null = null;
+
   addToCart(producto: Producto): void {
     this.cartService.addToCart(producto);
+    const pid = producto.idProducto ?? null;
+    this.addedProductId = pid;
+    setTimeout(() => {
+      if (this.addedProductId === pid) {
+        this.addedProductId = null;
+      }
+    }, 1500);
   }
 
   private cargarDemo(): void {
@@ -152,7 +171,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 14,
         stockMinimo: 5,
         idCategoria: 1,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 2,
@@ -164,7 +183,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 22,
         stockMinimo: 6,
         idCategoria: 1,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1563227812-0ea4c22e6cc8?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 3,
@@ -176,7 +195,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 3,
         stockMinimo: 5,
         idCategoria: 1,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1614313511387-1436a4480edd?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 4,
@@ -188,7 +207,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 45,
         stockMinimo: 10,
         idCategoria: 2,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 5,
@@ -200,7 +219,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 18,
         stockMinimo: 5,
         idCategoria: 3,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 6,
@@ -212,7 +231,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 20,
         stockMinimo: 5,
         idCategoria: 1,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 7,
@@ -224,7 +243,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 35,
         stockMinimo: 8,
         idCategoria: 2,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1608270586620-248524c67de9?w=500&auto=format&fit=crop&q=80'
       },
       {
         idProducto: 8,
@@ -236,7 +255,7 @@ export class CatalogStoreComponent implements OnInit {
         stock: 12,
         stockMinimo: 5,
         idCategoria: 3,
-        imagenUrl: ''
+        imagenUrl: 'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&auto=format&fit=crop&q=80'
       }
     ];
     this.loading = false;

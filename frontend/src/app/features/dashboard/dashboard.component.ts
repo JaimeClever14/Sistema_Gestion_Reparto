@@ -21,9 +21,22 @@ export class DashboardComponent implements OnInit {
 
   stats: StatCard[] = [];
 
+  get productosCriticos(): Producto[] {
+    const list = this.productos.filter((p) => p.stock <= (p.stockMinimo || 5));
+    return list.length > 0 ? list : this.productos.slice(0, 4);
+  }
+
+  get recentPedidos(): Pedido[] {
+    return this.pedidos.slice(0, 6);
+  }
+
+  get totalRecaudadoVal(): number {
+    return +this.pedidos.reduce((sum, p) => sum + (p.montoTotal || p.total || 0), 0).toFixed(2);
+  }
+
   getClienteNombre(cliente: any): string {
     if (!cliente) return 'Cliente General';
-    return cliente['nombresRazónSocial'] || cliente['nombresRazonSocial'] || 'Cliente General';
+    return cliente['nombresRazónSocial'] || cliente['nombresRazonSocial'] || 'Cliente Registrado';
   }
 
   ngOnInit(): void {
@@ -47,7 +60,7 @@ export class DashboardComponent implements OnInit {
         this.recalcularStats();
       },
       error: () => {
-        this.pedidos = this.mergeWithSharedOrders(this.getDemoOrders());
+        this.pedidos = this.mergeWithSharedOrders([]);
         this.recalcularStats();
       }
     });
@@ -72,7 +85,7 @@ export class DashboardComponent implements OnInit {
 
   private mergeWithSharedOrders(baseList: Pedido[]): Pedido[] {
     try {
-      const saved = localStorage.getItem('roma_shared_orders');
+      const saved = localStorage.getItem('roma_shared_orders_DISABLED');
       if (saved) {
         const shared: Pedido[] = JSON.parse(saved);
         const map = new Map<string, Pedido>();
@@ -149,7 +162,7 @@ export class DashboardComponent implements OnInit {
       { idProducto: 4, nombre: 'Pisco Cuatro Gallos Quebranta', precioCompra: 25, precioVenta: 42.00, stock: 12, stockMinimo: 5 }
     ];
 
-    this.pedidos = this.mergeWithSharedOrders(this.getDemoOrders());
+    this.pedidos = this.mergeWithSharedOrders([]);
     this.clientes = [
       { idCliente: 1, nombresRazónSocial: 'Inversiones Licoreras SAC', numeroDocumento: '20601234567' },
       { idCliente: 2, nombresRazónSocial: 'Juan Carlos Mendoza', numeroDocumento: '45891234' }

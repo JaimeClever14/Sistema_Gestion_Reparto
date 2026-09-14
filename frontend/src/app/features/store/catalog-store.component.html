@@ -1,8 +1,25 @@
-<!-- ═══ BREADCRUMB ═══ -->
+<!-- ═══ BREADCRUMB & HERO BANNER ═══ -->
 <div class="breadcrumb" *ngIf="searchTerm">
   <span class="breadcrumb-link" (click)="clearFilters()">Volver al listado</span>
   <span class="breadcrumb-sep">›</span>
   <span class="breadcrumb-current">Resultados para "{{ searchTerm }}"</span>
+</div>
+
+<!-- HERO PROMO BANNER -->
+<div class="promo-hero-banner" *ngIf="!searchTerm">
+  <div class="hero-content">
+    <span class="hero-badge">🚀 RomaExpress Delivery</span>
+    <h1>Licores & Bebidas entregadas a toda velocidad</h1>
+    <p>Realiza tu compra ahora y recibe tu pedido en <strong>menos de 45 minutos</strong> directamente en la puerta de tu casa.</p>
+    <div class="hero-pills">
+      <span>🚚 Envío express gratis</span>
+      <span>🔒 Pago seguro contraentrega o QR</span>
+      <span>🍾 100% Garantía de calidad</span>
+    </div>
+  </div>
+  <div class="hero-graphic">
+    <div class="fast-truck-icon">🚚💨</div>
+  </div>
 </div>
 
 <div class="catalog-layout">
@@ -20,7 +37,7 @@
           <a class="filter-link"
              [class.active]="selectedCategoriaId === cat.idCategoria"
              (click)="selectCategoria(cat.idCategoria!)">
-            {{ cat.nombreCategoria }}
+            {{ getNombreCat(cat) }}
           </a>
         </li>
       </ul>
@@ -61,7 +78,7 @@
       <div class="results-info">
         <h2 *ngIf="searchTerm">{{ productosFiltrados.length }} resultados para "{{ searchTerm }}"</h2>
         <h2 *ngIf="!searchTerm">Catálogo de productos</h2>
-        <span class="results-count">{{ productosFiltrados.length }} productos encontrados</span>
+        <span class="results-count">{{ productosFiltrados.length }} productos disponibles</span>
       </div>
       <div class="sort-area">
         <span class="sort-label">Ordenar por:</span>
@@ -87,11 +104,12 @@
     <!-- Products grid -->
     <div class="products-grid" *ngIf="!loading && productosFiltrados.length > 0">
       <article *ngFor="let prod of productosFiltrados" class="product-card" id="product-{{prod.idProducto}}">
-        <!-- Imagen placeholder -->
+        <!-- Imagen del producto -->
         <div class="product-image">
-          <div class="img-placeholder">
+          <div class="img-placeholder" *ngIf="!prod.imagenUrl">
             <span class="img-icon">🍾</span>
           </div>
+          <img *ngIf="prod.imagenUrl" [src]="prod.imagenUrl" [alt]="prod.nombre" class="real-product-img">
           <div class="product-badges">
             <span class="badge-discount" *ngIf="prod.precioVenta > 40">{{ getDiscountPercent() }}% OFF</span>
             <span class="badge-shipping">Envío gratis</span>
@@ -112,7 +130,7 @@
           <p class="price-cuotas">{{ getCuotas(prod.precioVenta) }}</p>
 
           <div class="shipping-info">
-            <span class="shipping-free">🚚 Envío gratis</span>
+            <span class="shipping-free">🚚 Envío express</span>
           </div>
 
           <div class="stock-info" *ngIf="isLowStock(prod)">
@@ -124,8 +142,11 @@
 
           <p class="product-seller">por <strong>RomaStore</strong></p>
           <div class="product-actions">
-            <button class="btn-primary-meli btn-add-cart" (click)="addToCart(prod)" [disabled]="!hasStock(prod)">
-              Agregar al carrito
+            <button class="btn-primary-meli btn-add-cart"
+                    [class.added]="addedProductId === prod.idProducto"
+                    (click)="addToCart(prod)"
+                    [disabled]="!hasStock(prod)">
+              {{ addedProductId === prod.idProducto ? '✓ ¡Agregado al Carrito!' : 'Agregar al carrito' }}
             </button>
           </div>
         </div>

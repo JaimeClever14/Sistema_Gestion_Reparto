@@ -23,6 +23,7 @@ export const routes: Routes = [
       { path: 'pedidos',   loadComponent: () => import('./features/orders/orders.component').then(m => m.OrdersComponent) },
       { path: 'usuarios',  loadComponent: () => import('./features/users/users.component').then(m => m.UsersComponent) },
       { path: 'pagos',     loadComponent: () => import('./features/payments/payments.component').then(m => m.PaymentsComponent) },
+      { path: 'reportes',  loadComponent: () => import('./features/reports/reports.component').then(m => m.ReportsComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' }
     ]
   },
@@ -60,6 +61,7 @@ export const routes: Routes = [
     canActivate: [roleGuard(['CLIENTE', 'ADMIN'])],
     children: [
       { path: 'catalog', loadComponent: () => import('./features/store/catalog-store.component').then(m => m.CatalogStoreComponent) },
+      { path: 'orders',  loadComponent: () => import('./features/store/orders/my-orders.component').then(m => m.MyOrdersComponent) },
       { path: '', pathMatch: 'full', redirectTo: 'catalog' }
     ]
   },

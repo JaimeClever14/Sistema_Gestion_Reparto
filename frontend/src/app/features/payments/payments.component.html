@@ -1,167 +1,159 @@
-<!-- CABECERA -->
-<section class="grid-head">
-  <div>
-    <p class="eyebrow">Cobros y Financiamiento</p>
-    <h1>Pagos y Créditos</h1>
-    <p class="muted">Registra pagos con Yape, Plin, efectivo o transferencia. Gestiona créditos y cuotas de clientes.</p>
-  </div>
+<div class="adminlte-page">
+  <div class="adminlte-card">
+    <div class="card-header">
+      <h3 class="card-title">Pagos y Créditos</h3>
+      <div class="card-tools">
+        <button type="button" class="btn btn-success btn-sm" (click)="openNewPagoModal()">
+          <span style="font-weight: bold;">+</span> Registrar Pago
+        </button>
+      </div>
+    </div>
 
-  <div class="head-actions">
-    <button type="button" class="btn-primary" (click)="openNewPagoModal()">
-      💳 Registrar Pago
-    </button>
-  </div>
-</section>
+    <div class="card-body">
+      
+      <!-- TABS ESTILO BOOTSTRAP -->
+      <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab === 'PAGOS'" (click)="activeTab = 'PAGOS'" style="cursor: pointer;">
+            💸 Pagos Recibidos ({{ pagos.length }})
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab === 'CREDITOS'" (click)="activeTab = 'CREDITOS'" style="cursor: pointer;">
+            💳 Créditos Activos ({{ creditos.length }})
+          </a>
+        </li>
+      </ul>
 
-<!-- TABS -->
-<div class="tabs-bar">
-  <button type="button" class="tab-btn" [class.active]="activeTab === 'PAGOS'" (click)="activeTab = 'PAGOS'">
-    💰 Pagos Recibidos
-    <span class="tab-count">{{ pagos.length }}</span>
-  </button>
-  <button type="button" class="tab-btn" [class.active]="activeTab === 'CREDITOS'" (click)="activeTab = 'CREDITOS'">
-    📋 Créditos Activos
-    <span class="tab-count">{{ creditos.length }}</span>
-  </button>
-</div>
-
-<!-- RESUMEN DE MÉTRICAS -->
-<section class="metrics-row" *ngIf="activeTab === 'PAGOS'">
-  <div class="metric-card glass tone-primary">
-    <span class="metric-icon">💰</span>
-    <div>
-      <p class="metric-label">Total Recaudado</p>
-      <strong class="metric-value">S/ {{ totalRecaudado.toFixed(2) }}</strong>
-    </div>
-  </div>
-  <div class="metric-card glass tone-success">
-    <span class="metric-icon">✅</span>
-    <div>
-      <p class="metric-label">Pagos Confirmados</p>
-      <strong class="metric-value">{{ pagos.length }}</strong>
-    </div>
-  </div>
-  <div class="metric-card glass tone-accent">
-    <span class="metric-icon">📱</span>
-    <div>
-      <p class="metric-label">Yape / Plin</p>
-      <strong class="metric-value">{{ pagosPorMetodo('Yape') }}</strong>
-    </div>
-  </div>
-  <div class="metric-card glass tone-muted">
-    <span class="metric-icon">💵</span>
-    <div>
-      <p class="metric-label">Efectivo</p>
-      <strong class="metric-value">{{ pagosPorMetodo('Efectivo') }}</strong>
-    </div>
-  </div>
-</section>
+      <!-- RESUMEN DE MÉTRICAS -->
+      <div class="row mb-4" *ngIf="activeTab === 'PAGOS'">
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-info text-white p-3 rounded shadow-sm">
+            <div class="inner">
+              <h3>S/ {{ totalRecaudado.toFixed(2) }}</h3>
+              <p>Total Recaudado</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-success text-white p-3 rounded shadow-sm">
+            <div class="inner">
+              <h3>{{ pagos.length }}</h3>
+              <p>Pagos Confirmados</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-purple text-white p-3 rounded shadow-sm" style="background-color: #6f42c1;">
+            <div class="inner">
+              <h3>{{ pagosPorMetodo('Yape') }}</h3>
+              <p>Yape / Plin</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-3 col-6">
+          <div class="small-box bg-secondary text-white p-3 rounded shadow-sm">
+            <div class="inner">
+              <h3>{{ pagosPorMetodo('Efectivo') }}</h3>
+              <p>Efectivo</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
 <!-- ═══════════════════════════════════════════ -->
 <!--              TAB: PAGOS                    -->
 <!-- ═══════════════════════════════════════════ -->
-<ng-container *ngIf="activeTab === 'PAGOS'">
-
-  <!-- TABLA DE PAGOS -->
-  <section class="table-container glass" *ngIf="!loading && pagos.length > 0">
-    <div class="table">
-      <div class="row head">
-        <span>N° Operación</span>
-        <span>Pedido</span>
-        <span>Método</span>
-        <span>Fecha / Hora</span>
-        <span>Monto</span>
-        <span>Estado</span>
-      </div>
-
-      <div class="row" *ngFor="let pago of pagos">
-        <div class="op-code">
-          <strong>{{ pago.numeroOperacion || ('OP-' + pago.idPago) }}</strong>
-          <span class="voucher-link" *ngIf="pago.comprobanteUrl">
-            📎 Comprobante
-          </span>
+      <!-- TAB: PAGOS -->
+      <ng-container *ngIf="activeTab === 'PAGOS'">
+        <div class="table-responsive" *ngIf="!loading && pagos.length > 0">
+          <table class="table table-bordered table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Nº Operación</th>
+                <th>Pedido</th>
+                <th>Método</th>
+                <th>Fecha / Hora</th>
+                <th>Monto</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pago of pagos">
+                <td>
+                  <strong>{{ pago.numeroOperacion || ('OP-' + pago.idPago) }}</strong><br>
+                  <a href="#" *ngIf="pago.comprobanteUrl" class="text-primary small">🧾 Comprobante</a>
+                </td>
+                <td><strong>{{ pago.idPedido ? ('PED-' + pago.idPedido) : '—' }}</strong></td>
+                <td>
+                  <span>{{ getMetodoIcon(pago.metodoPago?.nombreMetodo) }} {{ pago.metodoPago?.nombreMetodo || 'Efectivo' }}</span>
+                </td>
+                <td>{{ pago.fechaPago ? (pago.fechaPago | date:'dd/MM/yy HH:mm') : 'Hoy' }}</td>
+                <td><strong>S/ {{ (pago.montoPago || 0).toFixed(2) }}</strong></td>
+                <td><span class="badge bg-success">✔️ Registrado</span></td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div>
-          <strong>{{ pago.idPedido ? ('PED-' + pago.idPedido) : '—' }}</strong>
+        <div class="alert alert-info" *ngIf="!loading && pagos.length === 0">
+          No hay pagos registrados aún. Presiona <strong>Registrar Pago</strong> para comenzar.
         </div>
-
-        <div class="metodo-cell">
-          <span class="metodo-icon">{{ getMetodoIcon(pago.metodoPago?.nombreMetodo) }}</span>
-          <span>{{ pago.metodoPago?.nombreMetodo || 'Efectivo' }}</span>
-        </div>
-
-        <span class="date">{{ pago.fechaPago ? (pago.fechaPago | date:'dd/MM/yy HH:mm') : 'Hoy' }}</span>
-
-        <strong class="monto">S/ {{ (pago.montoPago || 0).toFixed(2) }}</strong>
-
-        <span class="badge-ok">✓ Registrado</span>
-      </div>
-    </div>
-  </section>
-
-  <div class="empty-state glass" *ngIf="!loading && pagos.length === 0">
-    <span class="empty-icon">💳</span>
-    <p>No hay pagos registrados aún. Presiona <strong>Registrar Pago</strong> para comenzar.</p>
-  </div>
-
-</ng-container>
+      </ng-container>
 
 <!-- ═══════════════════════════════════════════ -->
 <!--              TAB: CRÉDITOS                 -->
 <!-- ═══════════════════════════════════════════ -->
-<ng-container *ngIf="activeTab === 'CREDITOS'">
-
-  <section class="creditos-grid" *ngIf="!loading && creditos.length > 0">
-    <article *ngFor="let credito of creditos" class="credito-card glass">
-      <div class="credito-header">
-        <div>
-          <p class="cliente-name">{{ getClienteNombre(credito) }}</p>
-          <span class="doc-sub">{{ credito.cliente?.numeroDocumento || 'S/N' }}</span>
+      <!-- TAB: CRÉDITOS -->
+      <ng-container *ngIf="activeTab === 'CREDITOS'">
+        <div class="table-responsive" *ngIf="!loading && creditos.length > 0">
+          <table class="table table-bordered table-striped table-hover">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Estado</th>
+                <th>Total Crédito</th>
+                <th>Pendiente</th>
+                <th>Cuotas</th>
+                <th>Progreso</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let credito of creditos">
+                <td>
+                  <strong>{{ getClienteNombre(credito) }}</strong><br>
+                  <small class="text-muted">{{ credito.cliente?.numeroDocumento || 'S/N' }}</small>
+                </td>
+                <td>
+                  <span class="badge" [ngClass]="credito.montoPendiente > 0 ? 'bg-warning text-dark' : 'bg-success'">
+                    {{ credito.montoPendiente > 0 ? '⏳ Pendiente' : '✔️ Saldado' }}
+                  </span>
+                </td>
+                <td>S/ {{ credito.montoTotalCredito.toFixed(2) }}</td>
+                <td class="text-danger"><strong>S/ {{ credito.montoPendiente.toFixed(2) }}</strong></td>
+                <td>{{ credito.numeroCuotas }}</td>
+                <td>
+                  <div class="progress" style="height: 10px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         [style.width.%]="((credito.montoTotalCredito - credito.montoPendiente) / credito.montoTotalCredito) * 100"></div>
+                  </div>
+                  <small class="text-muted mt-1 d-block">
+                    Pagado: S/ {{ (credito.montoTotalCredito - credito.montoPendiente).toFixed(2) }} de S/ {{ credito.montoTotalCredito.toFixed(2) }}
+                  </small>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        <span class="credito-estado" [class.vencido]="credito.montoPendiente > 0">
-          {{ credito.montoPendiente > 0 ? '⚠ Pendiente' : '✓ Saldado' }}
-        </span>
-      </div>
 
-      <div class="credito-amounts">
-        <div class="amount-item">
-          <span>Total crédito</span>
-          <strong>S/ {{ credito.montoTotalCredito.toFixed(2) }}</strong>
+        <div class="alert alert-info" *ngIf="!loading && creditos.length === 0">
+          No hay créditos activos registrados en el sistema.
         </div>
-        <div class="amount-item">
-          <span>Pendiente</span>
-          <strong class="pending">S/ {{ credito.montoPendiente.toFixed(2) }}</strong>
-        </div>
-        <div class="amount-item">
-          <span>Cuotas</span>
-          <strong>{{ credito.numeroCuotas }}</strong>
-        </div>
-      </div>
+      </ng-container>
 
-      <div class="progress-bar">
-        <div
-          class="progress-fill"
-          [style.width.%]="((credito.montoTotalCredito - credito.montoPendiente) / credito.montoTotalCredito) * 100">
-        </div>
-      </div>
-      <p class="progress-label">
-        Pagado: S/ {{ (credito.montoTotalCredito - credito.montoPendiente).toFixed(2) }}
-        de S/ {{ credito.montoTotalCredito.toFixed(2) }}
-      </p>
-
-      <p class="credito-fecha">
-        📅 Concedido: {{ credito.fechaConcesion || 'Sin fecha' }}
-      </p>
-    </article>
-  </section>
-
-  <div class="empty-state glass" *ngIf="!loading && creditos.length === 0">
-    <span class="empty-icon">📋</span>
-    <p>No hay créditos activos registrados en el sistema.</p>
+    </div>
   </div>
-
-</ng-container>
+</div>
 
 <!-- MODAL REGISTRAR PAGO -->
 <div class="modal-overlay" *ngIf="showModalNewPago">
