@@ -37,15 +37,15 @@ public class Cliente {
     @Column(length = 100)
     private String email;
 
-    @Column(name = "fecha_registro", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_modificacion", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
     @Column(name = "ultima_compra")
     private LocalDateTime ultimaCompra;
 
-    @Column(columnDefinition = "BIT")
+    @Column
     private Boolean activo = true;
 }

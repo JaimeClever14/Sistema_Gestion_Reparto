@@ -49,10 +49,10 @@ public class Comprobante {
     @Column(name = "direccion_fiscal", length = 200)
     private String direccionFiscal;
 
-    @Column(columnDefinition = "BIT")
+    @Column
     private Boolean activo = true;
 
-    @Column(columnDefinition = "varchar(max)")
+    @Column(columnDefinition = "TEXT")
     private String xml;
 
     @Column(name = "pdf_url", length = 255)

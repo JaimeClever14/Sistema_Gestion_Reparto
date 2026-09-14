@@ -50,12 +50,12 @@ public class Promocion {
     @Column(name = "id_referencia")
     private Integer idReferencia;
 
-    @Column(columnDefinition = "BIT")
+    @Column
     private Boolean activo = true;
 
-    @Column(name = "fecha_registro", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_modificacion", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 }

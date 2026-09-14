@@ -41,7 +41,7 @@ public class Pago {
     @Column(length = 50)
     private String referencia;
 
-    @Column(columnDefinition = "BIT")
+    @Column
     private Boolean activo = true;
 
     @Column(length = 200)

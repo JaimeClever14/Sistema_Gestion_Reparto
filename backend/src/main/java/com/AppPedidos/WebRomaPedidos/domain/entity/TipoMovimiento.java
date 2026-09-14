@@ -33,9 +33,9 @@ public class TipoMovimiento {
 
     private Integer signo;
 
-    @Column(name = "fecha_registro", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_modificacion", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 }

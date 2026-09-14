@@ -43,15 +43,15 @@ public class Usuario {
     @Column(name = "id_rol", nullable = false)
     private Integer idRol;
 
-    @Column(name = "fecha_registro", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_registro")
     private LocalDateTime fechaRegistro;
 
-    @Column(name = "fecha_modificacion", columnDefinition = "DATETIME2(0)")
+    @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;
 
-    @Column(columnDefinition = "BIT")
+    @Column
     private Boolean activo = true;
 }
