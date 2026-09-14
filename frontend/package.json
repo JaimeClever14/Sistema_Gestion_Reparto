@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "ng serve",
-    "build": "npx ng build",
+    "build": "npx @angular/cli build",
     "test": "ng test"
   },
   "dependencies": {
