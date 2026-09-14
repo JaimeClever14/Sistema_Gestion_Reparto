@@ -1,4 +1,5 @@
 {
+  "outputDirectory": "dist/webromapedidos-frontend/browser",
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
