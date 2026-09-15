@@ -66,7 +66,15 @@ export class LoginComponent implements OnInit {
       },
       error: (err) => {
         this.loading = false;
-        this.errorMessage = err?.error?.message ?? 'Credenciales inválidas. Usa los perfiles demo si el servidor no está activo.';
+        let msg = '';
+        if (typeof err?.error?.message === 'string') {
+          msg = err.error.message;
+        } else if (typeof err?.error === 'string') {
+          msg = err.error;
+        } else if (typeof err?.message === 'string') {
+          msg = err.message;
+        }
+        this.errorMessage = msg || 'Credenciales inválidas. Usa los perfiles demo si el servidor no está activo.';
       }
     });
   }
@@ -114,8 +122,16 @@ export class LoginComponent implements OnInit {
       next: () => { this.loading = false; this.authService.navigateHome(); },
       error: (err) => {
         this.loading = false;
-        const msg = err?.error?.message ?? err?.error ?? err?.message;
-        if (typeof msg === 'string' && msg.length > 0) {
+        let msg = '';
+        if (typeof err?.error?.message === 'string') {
+          msg = err.error.message;
+        } else if (typeof err?.error === 'string') {
+          msg = err.error;
+        } else if (typeof err?.message === 'string') {
+          msg = err.message;
+        }
+
+        if (msg) {
           this.errorMessage = msg;
         } else if (err?.status === 0) {
           // Si es demo / fallback sin backend, guardar sesión localmente
