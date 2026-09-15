@@ -348,11 +348,6 @@ export class UsersComponent implements OnInit {
   }
 
   private cargarMockUsuarios(): void {
-    this.usuarios = [
-      { idUsuario: 1, nombres: 'Administrador', apellidos: 'Principal', username: 'admin', email: 'admin@roma.com', idRol: 1, estado: 'A' },
-      { idUsuario: 2, nombres: 'Carlos', apellidos: 'Mendoza', username: 'carlos_rep', email: 'carlos.m@roma.com', idRol: 4, estado: 'A' },
-      { idUsuario: 3, nombres: 'Ana María', apellidos: 'Torres', username: 'ana_vendedora', email: 'ana.torres@roma.com', idRol: 3, estado: 'A' },
-      { idUsuario: 4, nombres: 'Juan Pablo', apellidos: 'Ríos', username: 'juan_cliente', email: 'juan.rios@gmail.com', idRol: 2, estado: 'A' }
-    ];
+    this.usuarios = [];
   }
 }

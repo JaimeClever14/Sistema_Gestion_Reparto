@@ -319,16 +319,11 @@ export class ClientsComponent implements OnInit {
   }
 
   private defaultDemoClientes(): Cliente[] {
-    return [
-      { idCliente: 101, idTipoDocumento: 1, numeroDocumento: '45891201', nombresRazonSocial: 'Cliente 1 (Usuario Registrado)', nombresRazónSocial: 'Cliente 1 (Usuario Registrado)', apellidos: 'Demo', telefono: '987111222', email: 'cliente1@roma.pe', direccionPrincipal: 'Av. Ejercito 789, Miraflores', limiteCredito: 2500, estado: 'A' },
-      { idCliente: 1, idTipoDocumento: 2, numeroDocumento: '20601234567', nombresRazonSocial: 'Inversiones Licoreras SAC', nombresRazónSocial: 'Inversiones Licoreras SAC', telefono: '987654321', email: 'contacto@licoreras.pe', direccionPrincipal: 'Av. Larco 456, Miraflores', limiteCredito: 5000, estado: 'A' },
-      { idCliente: 2, idTipoDocumento: 1, numeroDocumento: '45891234', nombresRazonSocial: 'Juan Carlos Mendoza', nombresRazónSocial: 'Juan Carlos Mendoza', apellidos: 'Mendoza', telefono: '912345678', email: 'juan.mendoza@gmail.com', direccionPrincipal: 'Calle Los Olivos 123, San Isidro', limiteCredito: 1500, estado: 'A' },
-      { idCliente: 3, idTipoDocumento: 1, numeroDocumento: '78451296', nombresRazonSocial: 'María Elena Quispe Rivas', nombresRazónSocial: 'María Elena Quispe Rivas', apellidos: 'Quispe Rivas', telefono: '954123876', email: 'mquispe@hotmail.com', direccionPrincipal: 'Av. Brasil 1820, Pueblo Libre', limiteCredito: 2000, estado: 'A' }
-    ];
+    return [];
   }
 
   private cargarDemo(): void {
-    this.clientes = this.mergeWithRegisteredClients(this.defaultDemoClientes());
+    this.clientes = this.mergeWithRegisteredClients([]);
     this.loading = false;
   }
 }
