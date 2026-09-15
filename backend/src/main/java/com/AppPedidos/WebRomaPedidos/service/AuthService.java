@@ -89,24 +89,6 @@ public class AuthService {
         usuarioRepository.save(usuario);
         log.info("Usuario registrado: {} con rol {}", usuario.getUsername(), rol.getNombreRol());
 
-        if ("CLIENTE".equalsIgnoreCase(rol.getNombreRol())) {
-            try {
-                String fullNombre = (req.nombres().trim() + " " + req.apellidos().trim()).trim();
-                com.AppPedidos.WebRomaPedidos.domain.entity.Cliente cliente = com.AppPedidos.WebRomaPedidos.domain.entity.Cliente.builder()
-                        .idTipo(1)
-                        .numeroDocumento("4" + String.format("%07d", (int)(Math.random() * 10000000)))
-                        .razonSocial(fullNombre)
-                        .email(req.email().trim().toLowerCase())
-                        .fechaRegistro(LocalDateTime.now())
-                        .activo(true)
-                        .build();
-                clienteRepository.save(cliente);
-                log.info("Entidad Cliente vinculada automáticamente para {}", fullNombre);
-            } catch (Exception e) {
-                log.warn("No se pudo crear automáticamente el registro de Cliente: {}", e.getMessage());
-            }
-        }
-
         String token = jwtService.generateToken(adapt(usuario.getUsername(), usuario.getContrasena(), rol.getNombreRol()));
         return new AuthResponse(token, "Bearer", usuario.getUsername(), rol.getNombreRol());
     }
