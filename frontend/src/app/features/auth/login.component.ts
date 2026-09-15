@@ -41,8 +41,7 @@ export class LoginComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    const saved = localStorage.getItem('roma_remembered_user');
-    if (saved) this.loginForm.patchValue({ username: saved });
+    // Form fields start completely empty
   }
 
   switchTab(register: boolean): void {
