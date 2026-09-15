@@ -98,8 +98,15 @@ export class ClientsComponent implements OnInit {
 
   get clientesFiltrados(): Cliente[] {
     return this.clientes.filter((c) => {
-      const term = (this.searchTerm || '').toLowerCase().trim();
       const nombre = this.getClienteNombre(c).toLowerCase();
+      const email = (c.email || '').toLowerCase();
+      
+      // Excluir cuentas de Administradores y Personal del Sistema del Directorio de Clientes
+      if (nombre.includes('admin') || email.includes('admin') || (c as any).role === 'ADMIN' || (c as any).role === 'VENDEDOR' || (c as any).role === 'REPARTIDOR') {
+        return false;
+      }
+
+      const term = (this.searchTerm || '').toLowerCase().trim();
       const matchSearch = !term ||
         nombre.includes(term) ||
         (c.apellidos && c.apellidos.toLowerCase().includes(term)) ||
@@ -303,6 +310,13 @@ export class ClientsComponent implements OnInit {
         const registered: Cliente[] = JSON.parse(stored);
         for (const reg of registered) {
           const regName = this.getClienteNombre(reg).toLowerCase();
+          const regEmail = (reg.email || '').toLowerCase();
+          
+          // No incluir cuentas de Administrador o Personal del sistema en la lista de clientes
+          if (regName.includes('admin') || regEmail.includes('admin') || (reg as any).role === 'ADMIN' || (reg as any).role === 'VENDEDOR' || (reg as any).role === 'REPARTIDOR') {
+            continue;
+          }
+
           const exists = list.some(c => 
             (c.email && reg.email && c.email.toLowerCase() === reg.email.toLowerCase()) ||
             (this.getClienteNombre(c).toLowerCase() === regName)
