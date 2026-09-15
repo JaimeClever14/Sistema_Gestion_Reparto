@@ -5,6 +5,8 @@ import { Observable, of, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { AuthResponse, LoginRequest, RegisterRequest } from './models';
 
+import { environment } from '../../environments/environment';
+
 const DEMO_ACCOUNTS: Record<string, { password: string; role: string }> = {
   admin:       { password: 'Admin123!',       role: 'ADMIN' },
   vendedor:    { password: 'Vendedor123!',    role: 'VENDEDOR' },
@@ -25,7 +27,7 @@ export class AuthService {
 
   private readonly http    = inject(HttpClient);
   private readonly router  = inject(Router);
-  private readonly API_URL = 'http://localhost:8080/api/auth';
+  private readonly API_URL = `${environment.apiUrl}/auth`;
 
   // ─── LOGIN ──────────────────────────────────────────────────────────────
   login(req: LoginRequest): Observable<AuthResponse> {
@@ -47,7 +49,6 @@ export class AuthService {
   register(req: RegisterRequest): Observable<AuthResponse> {
     return this.http.post<AuthResponse>(`${this.API_URL}/register`, req).pipe(
       tap(res => this.store(res))
-      // NO demo fallback on register: if backend fails the user must know so data is not lost silently
     );
   }
 
@@ -65,18 +66,9 @@ export class AuthService {
       localStorage.removeItem('roma_role');
       sessionStorage.clear();
     } catch (e) {
-      console.error('Error clearing auth state on logout', e);
+      console.warn('Error clearing auth state on logout', e);
     }
-
-    // Navegación inmediata e instántanea con Angular Router
-    this.router.navigateByUrl('/login').then(success => {
-      if (!success) {
-        window.location.href = '/login';
-      }
-    }).catch(err => {
-      console.warn('Router navigation to /login failed, fallback to location.href', err);
-      window.location.href = '/login';
-    });
+    this.router.navigate(['/login']);
   }
 
   // ─── HELPERS ────────────────────────────────────────────────────────────
