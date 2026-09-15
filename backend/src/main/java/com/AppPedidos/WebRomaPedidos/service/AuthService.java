@@ -54,11 +54,11 @@ public class AuthService {
             throw new IllegalArgumentException("El apellido es obligatorio.");
         }
 
-        // Verificar duplicados
-        if (usuarioRepository.existsByUsername(req.username().trim())) {
+        // Verificar duplicados (búsqueda sin distinción de mayúsculas/minúsculas)
+        if (usuarioRepository.existsByUsernameIgnoreCase(req.username().trim())) {
             throw new IllegalArgumentException("El usuario '" + req.username() + "' ya existe. Elige otro nombre de usuario.");
         }
-        if (usuarioRepository.existsByEmail(req.email().trim())) {
+        if (usuarioRepository.existsByEmailIgnoreCase(req.email().trim())) {
             throw new IllegalArgumentException("El correo '" + req.email() + "' ya está registrado.");
         }
 
@@ -80,7 +80,7 @@ public class AuthService {
                 .apellidos(req.apellidos().trim())
                 .username(req.username().trim())
                 .contrasena(passwordEncoder.encode(req.password()))
-                .email(req.email().trim())
+                .email(req.email().trim().toLowerCase())
                 .idRol(rol.getIdRol())
                 .fechaRegistro(LocalDateTime.now())
                 .activo(true)
@@ -96,7 +96,7 @@ public class AuthService {
                         .idTipo(1)
                         .numeroDocumento("4" + String.format("%07d", (int)(Math.random() * 10000000)))
                         .razonSocial(fullNombre)
-                        .email(req.email().trim())
+                        .email(req.email().trim().toLowerCase())
                         .fechaRegistro(LocalDateTime.now())
                         .activo(true)
                         .build();
@@ -124,7 +124,7 @@ public class AuthService {
         }
 
         String input = req.username().trim();
-        Usuario usuario = usuarioRepository.findByUsernameOrEmail(input, input)
+        Usuario usuario = usuarioRepository.findByUsernameIgnoreCaseOrEmailIgnoreCase(input, input)
                 .orElseThrow(() -> new IllegalArgumentException("No existe una cuenta con ese usuario o correo."));
 
         // Verificar contraseña (con soporte para texto plano heredado)
